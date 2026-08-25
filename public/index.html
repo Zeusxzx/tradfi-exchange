@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101a25" />
+    <meta name="description" content="A coin that clocks in. Trade on Robinhood Chain during NYSE core hours." />
+    <title>Closing Bell — A coin that clocks in</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Caslon+Display&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="world" id="world" data-scene="closed">
+      <div class="ambient ambient-day" aria-hidden="true"></div>
+      <div class="ambient ambient-night" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+
+      <header class="site-header">
+        <a class="wordmark" href="#top" aria-label="Closing Bell home">
+          <span class="wordmark-mark">CB</span>
+          <span class="wordmark-text" data-token-name>Closing Bell</span>
+        </a>
+
+        <nav class="glass-nav" aria-label="Primary navigation">
+          <a href="#building">The floor</a>
+          <a href="#lives">After hours</a>
+          <a href="#trade">Trade</a>
+          <button class="nav-preview" id="navPreview" type="button" aria-label="Switch scene preview">
+            <span class="preview-icon" aria-hidden="true">◐</span>
+            <span id="navPreviewLabel">See market open</span>
+          </button>
+        </nav>
+
+        <button class="wallet-button" id="walletButton" type="button">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span id="walletLabel">Connect wallet</span>
+        </button>
+      </header>
+
+      <main id="top" class="experience-shell">
+        <section class="hero-copy" aria-labelledby="heroTitle">
+          <div class="market-kicker">
+            <span class="status-pulse" aria-hidden="true"></span>
+            <span id="marketKicker">The floor is closed</span>
+          </div>
+          <h1 id="heroTitle">A coin<br />that <em>clocks in.</em></h1>
+          <p class="hero-intro">
+            One coin. One shift. Trade <span data-token-symbol>$BELL</span> on Robinhood Chain only while Wall Street is at work.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#trade">Enter the exchange <span aria-hidden="true">↗</span></a>
+            <button class="text-action" id="tourButton" type="button">Meet the night shift</button>
+          </div>
+          <div class="market-clock" aria-live="polite">
+            <span class="clock-label" id="clockLabel">Next opening bell</span>
+            <strong id="marketClock">--:--:--</strong>
+            <span class="clock-caption" id="marketReason">Checking New York...</span>
+          </div>
+        </section>
+
+        <section class="scene-column" id="building" aria-label="Interactive Exchange Building">
+          <div class="scene-frame">
+            <div class="scene-label scene-label-top">
+              <span>40° 42′ 25″ N</span>
+              <span id="sceneTime">NEW YORK — --:-- ET</span>
+            </div>
+
+            <svg class="city-scene" viewBox="0 0 1000 720" role="img" aria-labelledby="sceneTitle sceneDesc">
+              <title id="sceneTitle">The Closing Bell Exchange Building and its neighborhood</title>
+              <desc id="sceneDesc">A clickable cutaway building where traders work during market hours and live throughout the surrounding city after close.</desc>
+              <defs>
+                <linearGradient id="daySky" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#8db4c6" />
+                  <stop offset="50%" stop-color="#c8c6ad" />
+                  <stop offset="100%" stop-color="#e6b789" />
+                </linearGradient>
+                <linearGradient id="nightSky" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#08111f" />
+                  <stop offset="52%" stop-color="#1a2a3d" />
+                  <stop offset="100%" stop-color="#5c4650" />
+                </linearGradient>
+                <linearGradient id="glassDay" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#d8eff1" stop-opacity=".9" />
+                  <stop offset="100%" stop-color="#5f8795" stop-opacity=".6" />
+                </linearGradient>
+                <linearGradient id="glassNight" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#132739" stop-opacity=".9" />
+                  <stop offset="100%" stop-color="#07111c" stop-opacity=".95" />
+                </linearGradient>
+                <linearGradient id="streetGlow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#d6a774" stop-opacity="0" />
+                  <stop offset="100%" stop-color="#d6a774" stop-opacity=".35" />
+                </linearGradient>
+                <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="10" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+                <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+                  <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#03070b" flood-opacity=".45" />
+                </filter>
+                <pattern id="windows" width="28" height="34" patternUnits="userSpaceOnUse">
+                  <rect x="5" y="6" width="12" height="18" rx="1" fill="#c9dddc" opacity=".22" />
+                </pattern>
+              </defs>
+
+              <g class="sky-layer">
+                <rect class="sky day-only" width="1000" height="720" fill="url(#daySky)" />
+                <rect class="sky night-only" width="1000" height="720" fill="url(#nightSky)" />
+                <circle class="sun day-only" cx="840" cy="120" r="55" fill="#fff5ce" filter="url(#softGlow)" />
+                <g class="moon-wrap night-only">
+                  <circle class="moon-glow" cx="830" cy="105" r="62" fill="#b7cae1" opacity=".16" filter="url(#softGlow)" />
+                  <circle cx="830" cy="105" r="36" fill="#dbe5ed" />
+                  <circle cx="844" cy="92" r="36" fill="#101d2c" />
+                </g>
+                <g class="stars night-only" fill="#d9e4ee">
+                  <circle cx="110" cy="94" r="1.5" /><circle cx="175" cy="45" r="1" /><circle cx="280" cy="102" r="1.2" />
+                  <circle cx="680" cy="60" r="1.4" /><circle cx="735" cy="140" r="1" /><circle cx="930" cy="64" r="1.3" />
+                </g>
+                <path class="cloud day-only" d="M65 150c38-30 76-15 88 9 30-18 74-5 83 23H52c-4-12 2-23 13-32Z" fill="#fff" opacity=".24" />
+              </g>
+
+              <g class="far-city" opacity=".82">
+                <path d="M0 230h70v-54h52v54h43V118h66v112h48v-81h59v81h47v-126h76v126h51V155h50v75h63v-96h56v96h70V78h72v152h50v-68h61v68h70v490H0Z" fill="#263845" />
+                <path d="M0 230h1000v490H0Z" fill="url(#windows)" opacity=".5" />
+              </g>
+
+              <g class="neighborhood" filter="url(#shadow)">
+                <g class="apartment-building">
+                  <rect x="28" y="245" width="210" height="346" rx="3" fill="#192a35" />
+                  <path d="M28 245h210v30H28Z" fill="#8b5c4b" />
+                  <text x="43" y="266" fill="#e6c59f" font-size="11" letter-spacing="3">WEST 11TH</text>
+                  <g class="apartment-windows">
+                    <rect x="48" y="298" width="72" height="55" fill="#e4ae6d" class="night-light" />
+                    <rect x="143" y="298" width="72" height="55" fill="#7c9aa5" opacity=".35" />
+                    <rect x="48" y="377" width="72" height="55" fill="#75909a" opacity=".35" />
+                    <rect x="143" y="377" width="72" height="55" fill="#d996a1" class="night-light" />
+                    <rect x="48" y="456" width="72" height="55" fill="#91aab0" opacity=".28" />
+                    <rect x="143" y="456" width="72" height="55" fill="#dcb16e" class="night-light" />
+                  </g>
+                  <g class="night-only apartment-life">
+                    <path d="M48 338h72" stroke="#1e3542" stroke-width="3" />
+                    <circle cx="76" cy="328" r="7" fill="#372b30" /><path d="M70 337v12h13v-12" fill="#9f6570" />
+                    <path d="M143 417h72" stroke="#502f41" stroke-width="3" />
+                    <circle cx="177" cy="402" r="6" fill="#251f27" /><path d="M170 411h15v17h-15Z" fill="#485b72" />
+                    <path d="M143 496h72" stroke="#5b462e" stroke-width="3" />
+                    <rect x="158" y="479" width="34" height="13" rx="2" fill="#805234" />
+                  </g>
+                  <g class="fire-escape" fill="none" stroke="#809098" stroke-width="3" opacity=".7">
+                    <path d="M35 362h92m-92 79h92m-92 79h92M58 362v158m52-158v158" />
+                    <path d="m58 362 52 79-52 79" />
+                  </g>
+                </g>
+
+                <g class="exchange-building">
+                  <path d="M253 205h498v386H253Z" fill="#c6c4b8" />
+                  <path d="M238 205h528v24H238Z" fill="#e4dfcf" />
+                  <path d="M276 158h452l38 47H238Z" fill="#d9d4c5" />
+                  <path d="M296 133h412v25H296Z" fill="#ece6d6" />
+                  <text x="502" y="183" text-anchor="middle" fill="#28333a" font-size="16" font-family="IBM Plex Mono" letter-spacing="6">CLOSING BELL EXCHANGE</text>
+                  <g class="columns" fill="#ddd9cc">
+                    <rect x="273" y="229" width="28" height="296" /><rect x="354" y="229" width="28" height="296" />
+                    <rect x="622" y="229" width="28" height="296" /><rect x="703" y="229" width="28" height="296" />
+                  </g>
+                  <g class="cutaway">
+                    <rect x="303" y="236" width="319" height="89" fill="#183240" class="office-room" />
+                    <rect x="303" y="334" width="319" height="89" fill="#142a35" class="office-room" />
+                    <rect x="303" y="432" width="319" height="90" fill="#10242e" class="office-room" />
+                    <g class="office-glass" stroke="#c4d2cf" stroke-opacity=".25">
+                      <path d="M409 236v89m106-89v89M409 334v89m106-89v89M409 432v90m106-90v90" />
+                    </g>
+                    <g class="desks" fill="#b78d63">
+                      <path d="M321 294h76v5h-76Zm108 0h67v5h-67Zm101 0h72v5h-72Z" />
+                      <path d="M321 392h76v5h-76Zm108 0h67v5h-67Zm101 0h72v5h-72Z" />
+                      <path d="M321 491h76v5h-76Zm108 0h67v5h-67Zm101 0h72v5h-72Z" />
+                    </g>
+                    <g class="screens">
+                      <rect x="330" y="266" width="24" height="17" rx="2" /><rect x="365" y="266" width="24" height="17" rx="2" />
+                      <rect x="438" y="266" width="24" height="17" rx="2" /><rect x="472" y="266" width="17" height="17" rx="2" />
+                      <rect x="540" y="266" width="24" height="17" rx="2" /><rect x="574" y="266" width="19" height="17" rx="2" />
+                      <rect x="330" y="364" width="24" height="17" rx="2" /><rect x="365" y="364" width="24" height="17" rx="2" />
+                      <rect x="438" y="364" width="24" height="17" rx="2" /><rect x="472" y="364" width="17" height="17" rx="2" />
+                    </g>
+                    <g class="ticker day-only">
+                      <rect x="303" y="237" width="319" height="15" fill="#071619" />
+                      <text x="315" y="248" fill="#9ee5b2" font-size="8" font-family="IBM Plex Mono">$BELL  +12.84%  •  THE FLOOR IS OPEN  •  CLOCK IN  •  $BELL  +12.84%</text>
+                    </g>
+                    <g class="night-only empty-office">
+                      <rect x="303" y="236" width="319" height="286" fill="#061119" opacity=".64" />
+                      <circle cx="332" cy="473" r="18" fill="#e8c16c" opacity=".12" filter="url(#softGlow)" />
+                    </g>
+                  </g>
+                  <g class="exchange-entrance">
+                    <path d="M411 525h182v66H411Z" fill="#2d3b41" />
+                    <path d="M424 539h42v52h-42Zm57 0h42v52h-42Zm57 0h42v52h-42Z" fill="#86a1a4" opacity=".55" />
+                    <circle cx="502" cy="551" r="10" fill="#d8b461" />
+                    <path d="M498 545h8v12h-8Z" fill="#25343a" />
+                  </g>
+                </g>
+
+                <g class="nightlife-building">
+                  <rect x="766" y="294" width="206" height="297" fill="#1a202d" />
+                  <path d="M766 294h206v35H766Z" fill="#432e45" />
+                  <text x="870" y="317" text-anchor="middle" fill="#f0b6cf" font-size="15" letter-spacing="5">THE CLOSE</text>
+                  <g class="night-only">
+                    <rect x="786" y="352" width="72" height="76" fill="#9b5478" opacity=".7" />
+                    <rect x="878" y="352" width="72" height="76" fill="#53649d" opacity=".68" />
+                    <path d="M786 454h164v90H786Z" fill="#302139" />
+                    <path class="club-beam" d="M796 456 850 544h-22Zm142 0-56 88h26Z" fill="#e971ae" opacity=".25" />
+                    <circle cx="839" cy="500" r="6" fill="#edcbbb" /><path d="M831 508h16v27h-16Z" fill="#9a465e" />
+                    <circle cx="888" cy="496" r="6" fill="#c19a82" /><path d="M880 504h16v31h-16Z" fill="#536f9f" />
+                  </g>
+                  <g class="day-only">
+                    <rect x="786" y="352" width="164" height="192" fill="#111925" opacity=".7" />
+                    <text x="868" y="445" text-anchor="middle" fill="#7a7180" font-size="11" letter-spacing="3">OPENS AT CLOSE</text>
+                  </g>
+                </g>
+              </g>
+
+              <g class="street-layer">
+                <path d="M0 591h1000v129H0Z" fill="#172127" />
+                <path d="M0 602h1000" stroke="#a7a49a" stroke-width="2" opacity=".35" />
+                <path d="M0 670h1000" stroke="#d1b17e" stroke-width="3" stroke-dasharray="32 48" opacity=".45" />
+                <path class="night-only" d="M0 591h1000v129H0Z" fill="url(#streetGlow)" />
+                <g class="cars night-only">
+                  <g class="taxi taxi-one"><path d="M70 632h86l23 18v20H56v-20Z" fill="#dcae36" /><circle cx="83" cy="671" r="11" fill="#0a1117" /><circle cx="151" cy="671" r="11" fill="#0a1117" /><rect x="98" y="625" width="25" height="9" fill="#f5d873" /></g>
+                  <g class="car car-two"><path d="M730 663h90l18 15v18H718v-18Z" fill="#802f3b" /><circle cx="748" cy="697" r="10" fill="#090d12" /><circle cx="810" cy="697" r="10" fill="#090d12" /></g>
+                </g>
+                <g class="day-only city-bus"><path d="M772 622h147v65H772Z" fill="#5d7c82" /><rect x="785" y="633" width="29" height="23" fill="#b5d1d1" /><rect x="823" y="633" width="29" height="23" fill="#b5d1d1" /><rect x="861" y="633" width="29" height="23" fill="#b5d1d1" /><circle cx="804" cy="687" r="10" fill="#111" /><circle cx="889" cy="687" r="10" fill="#111" /></g>
+                <g class="subway-entrance">
+                  <path d="M238 617h102v12H238Z" fill="#879194" />
+                  <path d="M250 629h78l-12 91h-54Z" fill="#071018" />
+                  <circle cx="246" cy="606" r="13" fill="#ddd" /><text x="246" y="611" text-anchor="middle" fill="#111" font-size="14" font-weight="700">M</text>
+                  <path class="night-only subway-glow" d="M262 642h54l-5 61h-44Z" fill="#d4a85f" opacity=".25" />
+                </g>
+                <g class="street-lamps night-only">
+                  <path d="M46 580v75m0-75q0-20 18-20" stroke="#222f36" stroke-width="5" fill="none" /><circle cx="66" cy="560" r="8" fill="#f5d78c" filter="url(#softGlow)" />
+                  <path d="M684 580v75m0-75q0-20 18-20" stroke="#222f36" stroke-width="5" fill="none" /><circle cx="704" cy="560" r="8" fill="#f5d78c" filter="url(#softGlow)" />
+                </g>
+              </g>
+
+              <g class="characters">
+                <g class="hotspot character day-only trader-one" data-character="ivy" role="button" tabindex="0" aria-label="Meet Ivy, the head trader">
+                  <circle cx="341" cy="271" r="7" fill="#7b4b3a" /><path d="M332 280h18v15h-18Z" fill="#cc856d" /><path d="M329 294h24" stroke="#f2c96e" stroke-width="3" />
+                  <circle class="hotspot-ring" cx="341" cy="281" r="22" />
+                </g>
+                <g class="hotspot character day-only trader-two" data-character="leo" role="button" tabindex="0" aria-label="Meet Leo, the coin mascot">
+                  <circle cx="454" cy="367" r="8" fill="#d7b28f" /><path d="M445 376h18v17h-18Z" fill="#6e8f62" /><path d="m446 362 8-9 8 9" fill="#d2ad4c" />
+                  <circle class="hotspot-ring" cx="454" cy="377" r="23" />
+                </g>
+                <g class="hotspot character day-only analyst" data-character="omar" role="button" tabindex="0" aria-label="Meet Omar, the analyst">
+                  <circle cx="561" cy="466" r="7" fill="#8e634e" /><path d="M552 475h18v17h-18Z" fill="#47617d" /><path d="M552 469h18" stroke="#202b38" stroke-width="2" />
+                  <circle class="hotspot-ring" cx="561" cy="477" r="22" />
+                </g>
+                <g class="hotspot character night-only dj" data-character="ivy" role="button" tabindex="0" aria-label="Find Ivy after hours">
+                  <circle cx="839" cy="500" r="7" fill="#7b4b3a" /><path d="M831 508h16v27h-16Z" fill="#bd5278" /><path d="M828 520h22" stroke="#e5b4d1" stroke-width="3" />
+                  <circle class="hotspot-ring" cx="839" cy="514" r="25" />
+                </g>
+                <g class="hotspot character night-only mascot-home" data-character="leo" role="button" tabindex="0" aria-label="Find Leo after hours">
+                  <circle cx="177" cy="402" r="7" fill="#d7b28f" /><path d="M168 411h18v17h-18Z" fill="#6e8f62" /><path d="m169 397 8-9 8 9" fill="#d2ad4c" />
+                  <circle class="hotspot-ring" cx="177" cy="413" r="24" />
+                </g>
+                <g class="hotspot character night-only subway-rider" data-character="omar" role="button" tabindex="0" aria-label="Find Omar after hours">
+                  <circle cx="286" cy="647" r="7" fill="#8e634e" /><path d="M278 656h16v24h-16Z" fill="#47617d" /><path d="M276 665h20" stroke="#d5b67a" stroke-width="3" />
+                  <circle class="hotspot-ring" cx="286" cy="660" r="24" />
+                </g>
+                <g class="hotspot character night-only janitor" data-character="mo" role="button" tabindex="0" aria-label="Meet Mo, the night janitor">
+                  <circle cx="332" cy="471" r="7" fill="#6e4a37" /><path d="M324 480h16v22h-16Z" fill="#7b8764" /><path d="m343 482 8 27" stroke="#bb9a64" stroke-width="3" />
+                  <circle class="hotspot-ring" cx="332" cy="484" r="24" />
+                </g>
+                <g class="hotspot character night-only security" data-character="sasha" role="button" tabindex="0" aria-label="Meet Sasha, the night guard">
+                  <circle cx="521" cy="563" r="7" fill="#c08e72" /><path d="M512 572h18v22h-18Z" fill="#263f55" /><circle cx="525" cy="579" r="2" fill="#e1c263" />
+                  <circle class="hotspot-ring" cx="521" cy="578" r="25" />
+                </g>
+              </g>
+            </svg>
+
+            <div class="scene-index" aria-hidden="true">
+              <span>01</span><i></i><span>02</span>
+            </div>
+            <div class="scene-instruction" id="lives">
+              <span class="instruction-dot"></span>
+              Click a person. Their shift continues after the bell.
+            </div>
+
+            <aside class="lore-card" id="loreCard" aria-live="polite" aria-hidden="true">
+              <button id="closeLore" type="button" aria-label="Close character story">×</button>
+              <span class="lore-number" id="loreNumber">EMPLOYEE 001</span>
+              <h2 id="loreName">Ivy Mercado</h2>
+              <p class="lore-role" id="loreRole">Head trader / night DJ</p>
+              <p id="loreStory">She moves volume by day and the room by night.</p>
+              <span class="lore-location" id="loreLocation">CURRENTLY: THE CLOSE</span>
+            </aside>
+          </div>
+
+          <div class="scene-controls" aria-label="Scene preview controls">
+            <span class="control-label">View the city</span>
+            <div class="segmented-control">
+              <button type="button" data-preview="open">09:30 <span>Floor</span></button>
+              <button type="button" data-preview="closed" class="active">16:01 <span>City</span></button>
+              <button type="button" data-preview="live">Live <span>Now</span></button>
+            </div>
+            <span class="preview-disclaimer">Visual preview only. Trading follows the real clock.</span>
+          </div>
+        </section>
+
+        <aside class="trade-column" id="trade" aria-labelledby="tradeTitle">
+          <div class="trade-card">
+            <div class="trade-card-header">
+              <div>
+                <span class="eyebrow">Robinhood Chain · 4663</span>
+                <h2 id="tradeTitle"><span data-token-symbol>$BELL</span> / ETH</h2>
+              </div>
+              <span class="market-badge" id="marketBadge">Closed</span>
+            </div>
+
+            <div class="price-block">
+              <strong>—</strong>
+              <span>Price arrives with liquidity</span>
+            </div>
+
+            <div class="mini-chart" aria-label="Decorative price chart awaiting live liquidity">
+              <svg viewBox="0 0 320 80" preserveAspectRatio="none" aria-hidden="true">
+                <defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7e0c0" stop-opacity=".35" /><stop offset="1" stop-color="#b7e0c0" stop-opacity="0" /></linearGradient></defs>
+                <path d="M0 66C27 62 34 43 56 48s27 12 47 2 21-31 46-25 31 34 55 25 25-25 46-20 36 23 70-11V80H0Z" fill="url(#chartFill)" />
+                <path d="M0 66C27 62 34 43 56 48s27 12 47 2 21-31 46-25 31 34 55 25 25-25 46-20 36 23 70-11" fill="none" stroke="#c9e9cf" stroke-width="2" />
+              </svg>
+            </div>
+
+            <div class="trade-tabs" role="tablist" aria-label="Trade direction">
+              <button type="button" role="tab" aria-selected="true" data-side="buy">Clock in</button>
+              <button type="button" role="tab" aria-selected="false" data-side="sell">Clock out</button>
+            </div>
+
+            <label class="amount-field">
+              <span id="amountLabel">You pay</span>
+              <span class="amount-row">
+                <input id="amountInput" type="number" min="0" step="any" placeholder="0.00" inputmode="decimal" />
+                <span id="amountCurrency">ETH</span>
+              </span>
+            </label>
+            <div class="trade-detail"><span>Session</span><strong id="sessionDetail">Core market closed</strong></div>
+            <div class="trade-detail"><span>Execution</span><strong id="executionDetail">Awaiting contract</strong></div>
+
+            <button class="trade-submit" id="tradeSubmit" type="button" disabled>
+              <span id="tradeSubmitLabel">Returns at the opening bell</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <p class="trade-note" id="tradeNote">Preview interface. No contract or liquidity route is configured, so this site cannot submit a transaction.</p>
+          </div>
+
+          <div class="principle-card">
+            <span>THE RULE</span>
+            <p>Crypto never sleeps.<br /><em>This coin has boundaries.</em></p>
+            <a href="https://www.nyse.com/trade/hours-calendars" target="_blank" rel="noreferrer">NYSE calendar ↗</a>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="site-footer">
+        <span>Built on Robinhood Chain</span>
+        <span>Core session 09:30–16:00 ET</span>
+        <a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noreferrer">Explorer ↗</a>
+      </footer>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+  </body>
+</html>

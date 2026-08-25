@@ -1,0 +1,15 @@
+{
+  "name": "market-hours-exchange",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A living NYSE-hours trading world for Robinhood Chain",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "check": "node --check server.js && node --check public/app.js && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

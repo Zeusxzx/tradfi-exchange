@@ -1,6 +1,6 @@
 # Closing Bell / Exchange Building
 
-A cinematic single-token trading shell for Robinhood Chain that follows the NYSE core session. The visual centerpiece is an original, clickable SVG Manhattan block: active trading floors while the market is open and persistent character lives across apartments, transit, nightlife, and the building's night shift after close.
+A cinematic single-token trading shell for Robinhood Chain that follows the NYSE core session. The visual centerpiece is a GPT-generated photoreal Manhattan exchange with populated trading floors, aligned human-activity frames, and a full-night city state. The interface crossfades daylight into city light after the closing bell while the same building remains centered.
 
 ## Run locally
 

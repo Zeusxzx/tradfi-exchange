@@ -1,304 +1,214 @@
-const world = document.querySelector('#world');
-const marketKicker = document.querySelector('#marketKicker');
-const marketClock = document.querySelector('#marketClock');
-const marketReason = document.querySelector('#marketReason');
-const marketBadge = document.querySelector('#marketBadge');
-const sessionDetail = document.querySelector('#sessionDetail');
-const executionDetail = document.querySelector('#executionDetail');
-const tradeSubmit = document.querySelector('#tradeSubmit');
-const tradeSubmitLabel = document.querySelector('#tradeSubmitLabel');
-const tradeNote = document.querySelector('#tradeNote');
-const navPreview = document.querySelector('#navPreview');
-const navPreviewLabel = document.querySelector('#navPreviewLabel');
-const sceneTime = document.querySelector('#sceneTime');
+const experience = document.querySelector('#experience');
+const viewButtons = [...document.querySelectorAll('[data-view-button]')];
+const personTargets = [...document.querySelectorAll('[data-person]')];
+const personCard = document.querySelector('#personCard');
+const tradeDrawer = document.querySelector('#tradeDrawer');
+const drawerScrim = document.querySelector('#drawerScrim');
 const walletButton = document.querySelector('#walletButton');
 const walletLabel = document.querySelector('#walletLabel');
+const tradeSubmit = document.querySelector('#tradeSubmit');
 const toast = document.querySelector('#toast');
-const loreCard = document.querySelector('#loreCard');
-const closeLore = document.querySelector('#closeLore');
-const previewButtons = [...document.querySelectorAll('[data-preview]')];
-const characterTargets = [...document.querySelectorAll('[data-character]')];
-const tradeTabs = [...document.querySelectorAll('[data-side]')];
 
-const characterStories = {
-  ivy: {
-    number: 'EMPLOYEE 001',
-    name: 'Ivy Mercado',
-    role: 'Head trader / night DJ',
-    open: 'Ivy runs the loudest desk on the second floor. She claims the closing bell is always a half-beat late.',
-    closed: 'At 4:14 she is behind the booth at The Close, turning the final price candles into the night’s first track.',
-    openLocation: 'CURRENTLY: EQUITIES DESK',
-    closedLocation: 'CURRENTLY: THE CLOSE'
-  },
-  leo: {
-    number: 'EMPLOYEE 009',
-    name: 'Leo Bell',
-    role: 'Official mascot / unofficial intern',
-    open: 'Leo rings the opening bell, loses his badge twice a week, and somehow knows every holder by name.',
-    closed: 'Leo lives across the street. His crown stays on until bedtime and his group chat never stops moving.',
-    openLocation: 'CURRENTLY: THE FLOOR',
-    closedLocation: 'CURRENTLY: WEST 11TH, APT 4B'
-  },
-  omar: {
-    number: 'EMPLOYEE 032',
-    name: 'Omar Price',
-    role: 'Risk analyst / subway philosopher',
-    open: 'Omar sees patterns before the screens do. Nobody understands his charts until three hours later.',
-    closed: 'He takes the M train home and writes tomorrow’s market thesis on the back of old transfer slips.',
-    openLocation: 'CURRENTLY: RISK & ODD LOTS',
-    closedLocation: 'CURRENTLY: DOWNTOWN PLATFORM'
-  },
-  mo: {
-    number: 'NIGHT SHIFT 001',
-    name: 'Mo Green',
-    role: 'Head janitor / floor historian',
-    open: 'Mo sleeps while the traders make a mess of the place.',
-    closed: 'He knows every rumor the floor has ever produced. If a ticker moved, Mo swept up the evidence.',
-    openLocation: 'CURRENTLY: OFF DUTY',
-    closedLocation: 'CURRENTLY: THIRD FLOOR'
-  },
-  sasha: {
-    number: 'NIGHT SHIFT 002',
-    name: 'Sasha Keys',
-    role: 'Security / opening-bell keeper',
-    open: 'Sasha watches the lobby and pretends not to hear Leo practicing the bell upstairs.',
-    closed: 'Every light can go dark except the lobby. Sasha holds the keys and starts the coffee at 9:12 sharp.',
-    openLocation: 'CURRENTLY: MAIN LOBBY',
-    closedLocation: 'CURRENTLY: MAIN LOBBY'
-  }
+const people = {
+  ivy: { number: 'EMPLOYEE 001', name: 'Ivy Mercado', role: 'Head trader · night DJ', open: 'Ivy moves between the center desk and the glass wall all day, reading the room faster than the screens. At the bell, she leaves the floor for a booth downtown.', closed: 'Ivy clocked out at the bell. She is across town turning the closing candles into the first track of the night.', openLocation: 'THIRD FLOOR · EQUITIES', closedLocation: 'OFF DUTY · LOWER EAST SIDE' },
+  omar: { number: 'EMPLOYEE 017', name: 'Omar Price', role: 'Risk analyst', open: 'Omar is the one standing when everyone else sits. He watches four markets, two phones, and every door at once.', closed: 'His desk is dark. Omar is on the train home, writing tomorrow’s thesis in the margins of today’s close.', openLocation: 'SECOND FLOOR · RISK', closedLocation: 'OFF DUTY · DOWNTOWN TRAIN' },
+  leo: { number: 'EMPLOYEE 009', name: 'Leo Bell', role: 'Opening-bell keeper', open: 'Leo opens the floor at 9:30 sharp and spends the rest of the session moving between desks, delivering coffee and bad opinions.', closed: 'Leo locked the bell away. He lives six blocks over and will be back before the first monitor wakes up.', openLocation: 'FIRST FLOOR · OPERATIONS', closedLocation: 'OFF DUTY · WEST VILLAGE' },
+  mo: { number: 'NIGHT SHIFT 001', name: 'Mo Green', role: 'Building night manager', open: 'Mo sleeps while the building is loud.', closed: 'With four trading floors empty, Mo owns the building. He cleans one floor at a time while blue standby monitors keep him company.', openLocation: 'OFF DUTY', closedLocation: 'SECOND FLOOR · NIGHT SHIFT' },
+  sasha: { number: 'NIGHT SHIFT 002', name: 'Sasha Keys', role: 'Security · bell keeper', open: 'Sasha holds the front desk while the floor runs above her.', closed: 'The exchange is dark, but the lobby never is. Sasha watches the city traffic and starts the first coffee at 9:12.', openLocation: 'GROUND FLOOR · LOBBY', closedLocation: 'GROUND FLOOR · NIGHT SHIFT' }
 };
 
 let publicConfig = null;
 let marketStatus = null;
-let previewMode = 'live';
+let activeView = 'live';
 let selectedSide = 'buy';
-let countdownTimer = null;
-let toastTimer = null;
-
-function shortAddress(address) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
+let toastTimer;
 
 function showToast(message) {
   toast.textContent = message;
   toast.classList.add('visible');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('visible'), 3600);
+  toastTimer = setTimeout(() => toast.classList.remove('visible'), 3200);
 }
 
-function activeScene() {
-  if (previewMode === 'live') return marketStatus?.state || 'closed';
-  return previewMode;
+function visibleState() {
+  if (activeView === 'live') return marketStatus?.state || 'closed';
+  return activeView;
 }
 
-function applyScene() {
-  const scene = activeScene();
-  world.dataset.scene = scene;
-  navPreviewLabel.textContent = scene === 'open' ? 'See after hours' : 'See market open';
-  previewButtons.forEach((button) => {
-    button.classList.toggle('active', button.dataset.preview === previewMode);
-  });
-  if (loreCard.classList.contains('visible')) {
-    hideLore();
-  }
+function getNightMix() {
+  if (activeView === 'open') return 0;
+  if (activeView === 'closed') return 1;
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  }).formatToParts(new Date()).filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+  if (minutes >= 20 * 60 || minutes < 6 * 60) return 1;
+  if (minutes < 16 * 60) return 0;
+  return Math.min(1, Math.max(0, (minutes - 16 * 60) / (4 * 60)));
+}
+
+function closePersonCard() {
+  personCard.classList.remove('visible');
+  personCard.setAttribute('aria-hidden', 'true');
+}
+
+function renderView() {
+  experience.dataset.view = activeView;
+  experience.style.setProperty('--night-mix', getNightMix().toFixed(3));
+  viewButtons.forEach((button) => button.classList.toggle('active', button.dataset.viewButton === activeView));
+  const state = visibleState();
+  document.querySelector('#viewLabel').textContent = activeView === 'live'
+    ? `Live ${state === 'open' ? 'market-open' : 'after-hours'} view`
+    : `${state === 'open' ? 'Market-open' : 'Full-night'} preview`;
+  document.querySelector('#heroLineOne').textContent = state === 'open' ? 'ON THE' : 'OFF THE';
+  document.querySelector('#heroLineTwo').textContent = state === 'open' ? 'FLOOR.' : 'CLOCK.';
+  document.querySelector('#heroDescription').innerHTML = state === 'open'
+    ? 'Every desk is live.<br />The building is at work.'
+    : 'The exchange sleeps.<br />The city doesn’t.';
+  closePersonCard();
 }
 
 function updateClock() {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  sceneTime.textContent = `NEW YORK — ${formatter.format(new Date())} ET`;
-
+  const now = new Date();
+  document.querySelector('#newYorkTime').textContent = `${new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).format(now)} ET`;
+  if (activeView === 'live') experience.style.setProperty('--night-mix', getNightMix().toFixed(3));
   if (!marketStatus) return;
   if (marketStatus.isOpen) {
-    marketClock.textContent = 'OPEN NOW';
+    document.querySelector('#marketClock').textContent = 'OPEN NOW';
     return;
   }
-  if (!marketStatus.nextOpenAt) {
-    marketClock.textContent = '--:--:--';
-    return;
-  }
-  const milliseconds = Math.max(0, new Date(marketStatus.nextOpenAt).getTime() - Date.now());
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const days = Math.floor(totalSeconds / 86_400);
-  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
-  const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  const seconds = totalSeconds % 60;
-  marketClock.textContent = days > 0
+  const next = marketStatus.nextOpenAt ? new Date(marketStatus.nextOpenAt).getTime() : 0;
+  const total = Math.max(0, Math.floor((next - now.getTime()) / 1000));
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  document.querySelector('#marketClock').textContent = days
     ? `${days}D ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
     : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-function updateTradeAvailability() {
+function updateTrade() {
   if (!marketStatus || !publicConfig) return;
-  const executionConfigured = Boolean(publicConfig.tradeUrl && publicConfig.tokenAddress);
-
-  sessionDetail.textContent = marketStatus.isOpen ? `Open · ${marketStatus.coreHours}` : `${marketStatus.reason} · ${marketStatus.coreHours}`;
-  executionDetail.textContent = executionConfigured ? 'Configured route' : 'Awaiting contract';
-  tradeSubmit.disabled = !marketStatus.isOpen || !executionConfigured;
-
-  if (!marketStatus.isOpen) {
-    tradeSubmitLabel.textContent = 'Returns at the opening bell';
-    tradeNote.textContent = 'The order desk follows the real NYSE core session. Scene previews never enable a transaction.';
-  } else if (!executionConfigured) {
-    tradeSubmitLabel.textContent = 'Trading contract coming soon';
-    tradeNote.textContent = 'The floor is open, but no audited token contract or liquidity route is configured. This interface cannot submit a transaction.';
-  } else {
-    tradeSubmitLabel.textContent = selectedSide === 'buy' ? `Buy $${publicConfig.tokenSymbol}` : `Sell $${publicConfig.tokenSymbol}`;
-    tradeNote.textContent = 'You will review the execution route before signing anything in your wallet.';
-  }
+  const configured = Boolean(publicConfig.tokenAddress && publicConfig.tradeUrl);
+  document.querySelector('#drawerMarketLabel').textContent = marketStatus.isOpen ? 'Market open' : marketStatus.reason;
+  document.querySelector('#drawerSession').textContent = marketStatus.coreHours;
+  document.querySelector('#tokenStatus').textContent = configured ? 'Configured' : 'Awaiting contract';
+  tradeSubmit.disabled = !marketStatus.isOpen || !configured;
+  document.querySelector('#tradeSubmitLabel').textContent = !marketStatus.isOpen
+    ? 'Returns at the opening bell'
+    : configured ? `${selectedSide === 'buy' ? 'Buy' : 'Sell'} $${publicConfig.tokenSymbol}` : 'Trading contract coming soon';
+  document.querySelector('#tradeNote').textContent = !marketStatus.isOpen
+    ? 'The order desk follows the real NYSE core session. Visual previews never enable a transaction.'
+    : configured ? 'Review the execution route before signing in your wallet.' : 'The floor is open, but no audited token contract or liquidity route is configured.';
 }
 
-function renderMarketStatus() {
-  if (!marketStatus) return;
-  world.dataset.market = marketStatus.state;
-  marketKicker.textContent = marketStatus.isOpen ? 'The floor is open' : 'The floor is closed';
-  marketBadge.textContent = marketStatus.isOpen ? 'Open' : 'Closed';
-  marketReason.textContent = `${marketStatus.reason} · ${marketStatus.coreHours}`;
-  applyScene();
-  updateTradeAvailability();
+function renderMarket() {
+  experience.dataset.market = marketStatus.state;
+  document.querySelector('#marketStateLabel').textContent = marketStatus.isOpen ? 'Market open' : 'Market closed';
+  document.querySelector('#marketReason').textContent = `${marketStatus.reason} · ${marketStatus.coreHours}`;
+  renderView();
+  updateTrade();
   updateClock();
 }
 
 async function loadRuntime() {
   try {
     const [configResponse, statusResponse] = await Promise.all([
-      fetch('/api/config', { cache: 'no-store' }),
-      fetch('/api/market-status', { cache: 'no-store' })
+      fetch('/api/config', { cache: 'no-store' }), fetch('/api/market-status', { cache: 'no-store' })
     ]);
-    if (!configResponse.ok || !statusResponse.ok) throw new Error('Runtime service unavailable');
+    if (!configResponse.ok || !statusResponse.ok) throw new Error('Market service unavailable');
     publicConfig = await configResponse.json();
     marketStatus = await statusResponse.json();
-
-    document.querySelectorAll('[data-token-name]').forEach((element) => {
-      element.textContent = publicConfig.tokenName;
-    });
-    document.querySelectorAll('[data-token-symbol]').forEach((element) => {
-      element.textContent = `$${publicConfig.tokenSymbol}`;
-    });
-    document.title = `${publicConfig.tokenName} — A coin that clocks in`;
-    renderMarketStatus();
-  } catch (error) {
-    marketReason.textContent = 'Market clock unavailable';
-    marketKicker.textContent = 'Status unavailable';
-    marketBadge.textContent = 'Offline';
+    document.querySelectorAll('[data-token-name]').forEach((element) => { element.textContent = publicConfig.tokenName; });
+    document.querySelectorAll('[data-token-symbol]').forEach((element) => { element.textContent = `$${publicConfig.tokenSymbol}`; });
+    document.title = `${publicConfig.tokenName} — The coin that clocks in`;
+    renderMarket();
+  } catch {
+    document.querySelector('#marketStateLabel').textContent = 'Status unavailable';
+    document.querySelector('#marketReason').textContent = 'Trading remains disabled';
     tradeSubmit.disabled = true;
-    tradeSubmitLabel.textContent = 'Market status unavailable';
-    showToast('The New York market clock could not be reached. Trading remains disabled.');
+    showToast('The market clock could not be reached. Trading remains disabled.');
   }
 }
 
-function showLore(characterKey) {
-  const story = characterStories[characterKey];
-  if (!story) return;
-  const scene = activeScene();
-  document.querySelector('#loreNumber').textContent = story.number;
-  document.querySelector('#loreName').textContent = story.name;
-  document.querySelector('#loreRole').textContent = story.role;
-  document.querySelector('#loreStory').textContent = story[scene];
-  document.querySelector('#loreLocation').textContent = scene === 'open' ? story.openLocation : story.closedLocation;
-  loreCard.classList.add('visible');
-  loreCard.setAttribute('aria-hidden', 'false');
+function openPersonCard(key) {
+  const person = people[key];
+  if (!person) return;
+  const state = visibleState();
+  document.querySelector('#personNumber').textContent = person.number;
+  document.querySelector('#personName').textContent = person.name;
+  document.querySelector('#personRole').textContent = person.role;
+  document.querySelector('#personStory').textContent = person[state];
+  document.querySelector('#personLocation').textContent = state === 'open' ? person.openLocation : person.closedLocation;
+  personCard.classList.add('visible');
+  personCard.setAttribute('aria-hidden', 'false');
 }
 
-function hideLore() {
-  loreCard.classList.remove('visible');
-  loreCard.setAttribute('aria-hidden', 'true');
-}
-
-function setPreview(mode) {
-  previewMode = mode;
-  applyScene();
+function setTradeDrawer(open) {
+  tradeDrawer.classList.toggle('visible', open);
+  drawerScrim.classList.toggle('visible', open);
+  tradeDrawer.setAttribute('aria-hidden', String(!open));
 }
 
 async function connectWallet() {
-  if (!window.ethereum) {
-    showToast('No EVM wallet found. Install Robinhood Wallet, MetaMask, or another compatible wallet.');
-    return;
-  }
+  if (!window.ethereum) return showToast('No compatible EVM wallet found.');
   try {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: publicConfig.chain.hexId }]
-      });
-    } catch (switchError) {
-      if (switchError.code !== 4902) throw switchError;
-      await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [{
-          chainId: publicConfig.chain.hexId,
-          chainName: publicConfig.chain.name,
-          nativeCurrency: { name: 'Ether', symbol: publicConfig.chain.currency, decimals: 18 },
-          rpcUrls: [publicConfig.chain.rpcUrl],
-          blockExplorerUrls: [publicConfig.chain.explorerUrl]
-        }]
-      });
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: publicConfig.chain.hexId }] });
+    } catch (error) {
+      if (error.code !== 4902) throw error;
+      await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
+        chainId: publicConfig.chain.hexId,
+        chainName: publicConfig.chain.name,
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: [publicConfig.chain.rpcUrl],
+        blockExplorerUrls: [publicConfig.chain.explorerUrl]
+      }] });
     }
     walletButton.classList.add('connected');
-    walletLabel.textContent = shortAddress(accounts[0]);
-    showToast('Wallet connected to Robinhood Chain.');
+    walletLabel.textContent = `${accounts[0].slice(0, 5)}…${accounts[0].slice(-4)}`;
+    showToast('Connected to Robinhood Chain.');
   } catch (error) {
-    showToast(error?.message || 'Wallet connection was cancelled.');
+    showToast(error?.message || 'Wallet connection cancelled.');
   }
 }
 
-previewButtons.forEach((button) => {
-  button.addEventListener('click', () => setPreview(button.dataset.preview));
-});
-
-navPreview.addEventListener('click', () => {
-  setPreview(activeScene() === 'open' ? 'closed' : 'open');
-});
-
-document.querySelector('#tourButton').addEventListener('click', () => {
-  setPreview('closed');
-  setTimeout(() => showLore('mo'), 300);
-  document.querySelector('#building').scrollIntoView({ behavior: 'smooth', block: 'center' });
-});
-
-characterTargets.forEach((target) => {
-  target.addEventListener('click', () => showLore(target.dataset.character));
-  target.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      showLore(target.dataset.character);
-    }
-  });
-});
-
-closeLore.addEventListener('click', hideLore);
+viewButtons.forEach((button) => button.addEventListener('click', () => { activeView = button.dataset.viewButton; renderView(); }));
+document.querySelector('#resetLive').addEventListener('click', () => { activeView = 'live'; renderView(); });
+personTargets.forEach((target) => target.addEventListener('click', () => openPersonCard(target.dataset.person)));
+document.querySelector('#openStory').addEventListener('click', () => openPersonCard(visibleState() === 'open' ? 'ivy' : 'mo'));
+document.querySelector('#closePerson').addEventListener('click', closePersonCard);
+document.querySelector('#openTrade').addEventListener('click', () => setTradeDrawer(true));
+document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
+drawerScrim.addEventListener('click', () => setTradeDrawer(false));
 walletButton.addEventListener('click', connectWallet);
 
-tradeTabs.forEach((tab) => {
-  tab.addEventListener('click', () => {
-    selectedSide = tab.dataset.side;
-    tradeTabs.forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
-    document.querySelector('#amountLabel').textContent = selectedSide === 'buy' ? 'You pay' : 'You sell';
-    document.querySelector('#amountCurrency').textContent = selectedSide === 'buy' ? 'ETH' : `$${publicConfig?.tokenSymbol || 'BELL'}`;
-    updateTradeAvailability();
-  });
-});
+document.querySelectorAll('[data-side]').forEach((tab) => tab.addEventListener('click', () => {
+  selectedSide = tab.dataset.side;
+  document.querySelectorAll('[data-side]').forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
+  document.querySelector('#amountLabel').textContent = selectedSide === 'buy' ? 'You pay' : 'You sell';
+  document.querySelector('#amountCurrency').textContent = selectedSide === 'buy' ? 'ETH' : `$${publicConfig?.tokenSymbol || 'BELL'}`;
+  updateTrade();
+}));
 
 tradeSubmit.addEventListener('click', () => {
-  if (!marketStatus?.isOpen) {
-    showToast('The order desk is closed until the next NYSE core session.');
-    return;
-  }
-  if (!publicConfig?.tradeUrl || !publicConfig?.tokenAddress) {
-    showToast('No audited trading route has been configured.');
-    return;
-  }
+  if (!marketStatus?.isOpen) return showToast('The order desk is closed.');
+  if (!publicConfig?.tradeUrl || !publicConfig?.tokenAddress) return showToast('No audited trading route is configured.');
   window.open(publicConfig.tradeUrl, '_blank', 'noopener,noreferrer');
 });
 
-countdownTimer = setInterval(updateClock, 1_000);
-setInterval(loadRuntime, 60_000);
-window.addEventListener('beforeunload', () => clearInterval(countdownTimer));
+experience.addEventListener('pointermove', (event) => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const x = (event.clientX / window.innerWidth - .5) * -7;
+  const y = (event.clientY / window.innerHeight - .5) * -4;
+  experience.style.setProperty('--px', `${x}px`);
+  experience.style.setProperty('--py', `${y}px`);
+});
 
+setInterval(updateClock, 1000);
+setInterval(loadRuntime, 60000);
 loadRuntime();

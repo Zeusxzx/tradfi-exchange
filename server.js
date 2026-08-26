@@ -165,7 +165,11 @@ function serveStatic(requestPath, response, headers) {
     const contentType = mimeTypes[path.extname(filePath)] || 'application/octet-stream';
     const baseHeaders = {
       'Content-Type': contentType,
-      'Cache-Control': normalizedPath === '/index.html' ? 'no-cache' : 'public, max-age=3600',
+      // 'no-cache' still lets the browser reuse a cached copy, but only after
+      // revalidating with the server (a fast 304 if unchanged) -- unlike
+      // max-age, it can never silently serve yesterday's JS/CSS after a
+      // deploy. Media (large, rarely-changed) keeps a longer cache.
+      'Cache-Control': contentType.startsWith('video/') ? 'public, max-age=3600' : 'no-cache',
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com https://rpc.testnet.chain.robinhood.com; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     };

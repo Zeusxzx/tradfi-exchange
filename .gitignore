@@ -5,3 +5,5 @@ coverage/
 playwright-report/
 test-results/
 public/assets/*.png
+public/assets/*-v3.mp4
+public/assets/exchange-day-motion-v2.jpg

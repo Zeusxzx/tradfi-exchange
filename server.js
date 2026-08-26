@@ -28,7 +28,9 @@ const mimeTypes = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
-  '.ico': 'image/x-icon'
+  '.ico': 'image/x-icon',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm'
 };
 
 function easternParts(date) {
@@ -107,10 +109,12 @@ function getMarketStatus(now = new Date()) {
 
 function getPublicConfig() {
   return {
-    tokenName: process.env.TOKEN_NAME || 'Closing Bell',
-    tokenSymbol: process.env.TOKEN_SYMBOL || 'BELL',
+    tokenName: process.env.TOKEN_NAME || 'TradFI',
+    tokenSymbol: process.env.TOKEN_SYMBOL || 'TRADFI',
     tokenAddress: process.env.TOKEN_ADDRESS || '',
     tradeUrl: process.env.TRADE_URL || '',
+    supply: '1,792,000,000',
+    poolFee: '1%',
     chain: {
       id: 4663,
       hexId: '0x1237',
@@ -118,6 +122,19 @@ function getPublicConfig() {
       currency: 'ETH',
       rpcUrl: process.env.RPC_URL || 'https://rpc.mainnet.chain.robinhood.com',
       explorerUrl: process.env.EXPLORER_URL || 'https://robinhoodchain.blockscout.com'
+    },
+    // The MarketCalendar contract is the on-chain source of truth this whole site
+    // is dramatizing. Rehearsed + proven on testnet; mainnet address is set once
+    // TradFI actually launches on Robinhood Chain mainnet (4663).
+    marketCalendar: {
+      network: process.env.MARKET_CALENDAR_NETWORK || 'testnet',
+      chainId: 46630,
+      address: process.env.MARKET_CALENDAR_ADDRESS || '0xdC9A372eFaB73F3D45E01ECE286d6be614a5E693',
+      rpcUrl: process.env.MARKET_CALENDAR_RPC_URL || 'https://rpc.testnet.chain.robinhood.com',
+      // function selectors, computed offline (keccak256 of the signature) so the
+      // browser can eth_call this contract with zero dependencies:
+      isMarketOpenSelector: '0xd4ce85f3', // isMarketOpen()
+      nextOpenSelector: '0x564be63f' // nextOpen(uint256)
     }
   };
 }
@@ -131,7 +148,7 @@ function sendJson(response, statusCode, value) {
   response.end(JSON.stringify(value));
 }
 
-function serveStatic(requestPath, response) {
+function serveStatic(requestPath, response, headers) {
   const normalizedPath = requestPath === '/' ? '/index.html' : requestPath;
   const filePath = path.resolve(PUBLIC_DIR, `.${normalizedPath}`);
   if (!filePath.startsWith(PUBLIC_DIR)) {
@@ -139,18 +156,45 @@ function serveStatic(requestPath, response) {
     return;
   }
 
-  fs.readFile(filePath, (error, data) => {
-    if (error) {
-      sendJson(response, error.code === 'ENOENT' ? 404 : 500, { error: 'Not found' });
+  fs.stat(filePath, (statError, stat) => {
+    if (statError || !stat.isFile()) {
+      sendJson(response, statError && statError.code === 'ENOENT' ? 404 : 500, { error: 'Not found' });
       return;
     }
-    response.writeHead(200, {
-      'Content-Type': mimeTypes[path.extname(filePath)] || 'application/octet-stream',
+
+    const contentType = mimeTypes[path.extname(filePath)] || 'application/octet-stream';
+    const baseHeaders = {
+      'Content-Type': contentType,
       'Cache-Control': normalizedPath === '/index.html' ? 'no-cache' : 'public, max-age=3600',
       'X-Content-Type-Options': 'nosniff',
-      'Content-Security-Policy': "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+      'Content-Security-Policy': "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com https://rpc.testnet.chain.robinhood.com; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    };
+
+    // Video needs HTTP range support: Safari/iOS refuses to play <video> sources
+    // served without Accept-Ranges + 206 partial content.
+    const isMedia = contentType.startsWith('video/');
+    const rangeHeader = isMedia ? headers.range : undefined;
+    if (isMedia && rangeHeader) {
+      const match = /bytes=(\d*)-(\d*)/.exec(rangeHeader);
+      const start = match && match[1] ? Number(match[1]) : 0;
+      const end = match && match[2] ? Number(match[2]) : stat.size - 1;
+      const chunkSize = end - start + 1;
+      response.writeHead(206, {
+        ...baseHeaders,
+        'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+        'Content-Length': chunkSize
+      });
+      fs.createReadStream(filePath, { start, end }).pipe(response);
+      return;
+    }
+
+    response.writeHead(200, {
+      ...baseHeaders,
+      ...(isMedia ? { 'Accept-Ranges': 'bytes' } : {}),
+      'Content-Length': stat.size
     });
-    response.end(data);
+    fs.createReadStream(filePath).pipe(response);
   });
 }
 
@@ -173,7 +217,7 @@ function createServer() {
       sendJson(response, 200, getPublicConfig());
       return;
     }
-    serveStatic(url.pathname, response);
+    serveStatic(url.pathname, response, request.headers);
   });
 }
 

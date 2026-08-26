@@ -3,42 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#090c11" />
-    <meta name="description" content="The coin that clocks in. Trade on Robinhood Chain during New York market hours." />
-    <title>Closing Bell — The coin that clocks in</title>
+    <meta name="theme-color" content="#05070a" />
+    <meta name="description" content="TradFI — the memecoin that keeps banker's hours. Trades are only possible while the NYSE is open, enforced on-chain, not by a website." />
+    <title>TradFI — the memecoin that keeps banker's hours</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
     <link rel="preload" as="image" href="/assets/exchange-day-v2.jpg" />
     <link rel="preload" as="image" href="/assets/exchange-night-v2.jpg" />
-    <link rel="stylesheet" href="/styles.css?v=2" />
-    <script src="/app.js?v=2" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=4" />
+    <script src="/app.js?v=4" defer></script>
   </head>
   <body>
     <main class="experience" id="experience" data-market="closed" data-view="live" style="--night-mix: 1">
-      <section class="city-stage" id="building" aria-label="Living Manhattan exchange building">
-        <div class="scene-plane scene-day" aria-hidden="true"></div>
-        <div class="scene-plane scene-day-motion" aria-hidden="true"></div>
-        <div class="scene-plane scene-night" aria-hidden="true"></div>
-        <div class="atmosphere atmosphere-day" aria-hidden="true"></div>
-        <div class="atmosphere atmosphere-night" aria-hidden="true"></div>
-        <div class="traffic-lightflow" aria-hidden="true"></div>
-        <div class="scene-vignette" aria-hidden="true"></div>
-        <div class="grain" aria-hidden="true"></div>
 
-        <div class="person-hotspots" aria-label="People inside the exchange">
-          <button class="person-hotspot hotspot-ivy open-person" data-person="ivy" type="button" aria-label="Meet Ivy on the trading floor"><span>Ivy</span></button>
-          <button class="person-hotspot hotspot-omar open-person" data-person="omar" type="button" aria-label="Meet Omar on the trading floor"><span>Omar</span></button>
-          <button class="person-hotspot hotspot-leo open-person" data-person="leo" type="button" aria-label="Meet Leo on the trading floor"><span>Leo</span></button>
-          <button class="person-hotspot hotspot-mo night-person" data-person="mo" type="button" aria-label="Meet Mo on the night shift"><span>Mo</span></button>
-          <button class="person-hotspot hotspot-sasha night-person" data-person="sasha" type="button" aria-label="Meet Sasha in the lobby"><span>Sasha</span></button>
-        </div>
-      </section>
-
-      <header class="topbar">
-        <a class="brand" href="#building" aria-label="Closing Bell home">
-          <span class="brand-mark">9:30</span>
-          <span class="brand-name" data-token-name>Closing Bell</span>
+      <header class="masthead">
+        <a class="wordmark" href="#building" aria-label="TradFI home">
+          <span class="wordmark-main" data-token-name>TradFI</span>
+          <span class="wordmark-sub">the memecoin that keeps banker's hours</span>
         </a>
 
         <nav class="main-nav" aria-label="Primary navigation">
@@ -57,41 +39,116 @@
         </div>
       </header>
 
-      <section class="hero-copy" aria-labelledby="heroTitle">
-        <div class="market-state-line">
-          <span class="market-dot"></span>
-          <span id="marketStateLabel">Market closed</span>
-          <span class="line-rule"></span>
-          <span>New York</span>
+      <div class="ticker-tape" aria-hidden="true">
+        <div class="ticker-track" id="tickerTrack">
+          <span>TRADFI · <span data-token-symbol>$TRADFI</span></span>
+          <span class="ticker-dot"></span>
+          <span>SUPPLY 1,792,000,000</span>
+          <span class="ticker-dot"></span>
+          <span>POOL FEE 1%</span>
+          <span class="ticker-dot"></span>
+          <span>LP LOCKED FOREVER</span>
+          <span class="ticker-dot"></span>
+          <span id="tickerMarket">READING CHAIN…</span>
+          <span class="ticker-dot"></span>
+          <span id="tickerNext">—</span>
+          <span class="ticker-dot"></span>
+          <span>GATED IN THE HOOK, NOT THE TOKEN</span>
+          <span class="ticker-dot"></span>
         </div>
-        <h1 id="heroTitle"><span id="heroLineOne">OFF THE</span><br /><span id="heroLineTwo">CLOCK.</span></h1>
-        <p id="heroDescription">The exchange sleeps.<br />The city doesn’t.</p>
-      </section>
+      </div>
 
-      <section class="countdown-panel" aria-labelledby="countdownLabel">
-        <span id="countdownLabel">Next opening bell</span>
-        <strong id="marketClock">--:--:--</strong>
-        <div class="countdown-meta">
-          <span id="marketReason">Checking New York...</span>
-          <span id="newYorkTime">--:--:-- ET</span>
+      <div class="status-line">
+        <span class="market-dot"></span>
+        <span id="marketStateLabel">Market closed</span>
+        <span class="status-sep">·</span>
+        <span id="marketReason">Checking New York...</span>
+        <span class="status-sep">·</span>
+        <span id="newYorkTime">--:--:-- ET</span>
+        <button class="return-live-chip" id="resetLive" type="button">
+          <span id="viewLabel">Previewing</span> — return to live
+        </button>
+      </div>
+
+      <section class="city-frame" aria-labelledby="heroTitle">
+        <div class="frame-inner" id="building" aria-label="Living Manhattan exchange building">
+          <video class="scene-plane scene-day" id="videoDay" muted loop playsinline autoplay preload="auto" poster="/assets/exchange-day-v2.jpg" aria-hidden="true">
+            <source src="/assets/exchange-day.webm" type="video/webm" />
+            <source src="/assets/exchange-day.mp4" type="video/mp4" />
+          </video>
+          <video class="scene-plane scene-night" id="videoNight" muted loop playsinline autoplay preload="auto" poster="/assets/exchange-night-v2.jpg" aria-hidden="true">
+            <source src="/assets/exchange-night.webm" type="video/webm" />
+            <source src="/assets/exchange-night.mp4" type="video/mp4" />
+          </video>
+          <div class="atmosphere atmosphere-day" aria-hidden="true"></div>
+          <div class="atmosphere atmosphere-night" aria-hidden="true"></div>
+          <div class="scene-vignette" aria-hidden="true"></div>
+          <div class="grain" aria-hidden="true"></div>
+
+          <div class="person-hotspots" aria-label="People inside the exchange">
+            <button class="person-hotspot hotspot-ivy open-person" data-person="ivy" type="button" aria-label="Meet Ivy on the trading floor"><span>Ivy</span></button>
+            <button class="person-hotspot hotspot-omar open-person" data-person="omar" type="button" aria-label="Meet Omar on the trading floor"><span>Omar</span></button>
+            <button class="person-hotspot hotspot-leo open-person" data-person="leo" type="button" aria-label="Meet Leo on the trading floor"><span>Leo</span></button>
+            <button class="person-hotspot hotspot-mo night-person" data-person="mo" type="button" aria-label="Meet Mo on the night shift"><span>Mo</span></button>
+            <button class="person-hotspot hotspot-sasha night-person" data-person="sasha" type="button" aria-label="Meet Sasha in the lobby"><span>Sasha</span></button>
+          </div>
+
+          <div class="corner-tag sky-tag" id="skyTag">
+            <span class="sky-dot" aria-hidden="true"></span>
+            <span>Sky</span>
+            <span class="status-sep">·</span>
+            <span id="skyStatus">Clear</span>
+          </div>
+          <svg class="plane-sprite" id="planeSprite" viewBox="0 0 64 20" width="46" height="14" aria-hidden="true">
+            <path d="M2 11l18-3 9-7 3 1-4 7 14-2 2 3-14 5-3 7-3-1 1-8-18 4z" fill="rgba(245,241,232,.85)"/>
+          </svg>
+
+          <h1 class="frame-title" id="heroTitle"><span id="heroLineOne">OFF THE</span> <span id="heroLineTwo">CLOCK.</span></h1>
+
+          <div class="gauge-card gauge-traffic" id="trafficGauge">
+            <span class="gauge-label">Street traffic</span>
+            <div class="gauge-ticks" id="trafficTicks">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <span class="gauge-sub" id="trafficSub">Reading FDR Dr…</span>
+          </div>
+
+          <div class="gauge-card gauge-subway" id="subwayGauge">
+            <span class="gauge-label">4 line · subway</span>
+            <div class="gauge-dots" id="subwayDots">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <span class="gauge-sub" id="subwaySub">Reading platform…</span>
+          </div>
         </div>
       </section>
 
-      <section class="building-caption">
-        <span class="caption-index">01</span>
-        <div>
-          <span>The Exchange</span>
-          <p>Four floors. One token.<br />A real working day.</p>
+      <section class="chain-proof" aria-labelledby="chainProofTitle">
+        <div class="chain-proof-badge" id="chainProofBadge">
+          <span class="chain-proof-dot" id="chainProofDot"></span>
+          <span class="chain-proof-status" id="chainProofStatus">Reading chain…</span>
+        </div>
+        <div class="chain-proof-copy">
+          <span id="chainProofTitle" class="caption-index">02 · NOT A UI TRICK</span>
+          <p>This isn't a website pretending the market is closed. A Uniswap v4 hook calls
+            <code>MarketCalendar.isMarketOpen()</code> before every swap and reverts the
+            transaction if it's false. The read below just came straight from that
+            contract on Robinhood Chain — no backend in between.</p>
+          <a class="chain-proof-link" id="chainProofLink" href="#" target="_blank" rel="noreferrer">View MarketCalendar on the explorer ↗</a>
         </div>
       </section>
 
-      <section class="live-indicator" aria-live="polite">
-        <span class="live-eye" aria-hidden="true"></span>
-        <span id="viewLabel">Live after-hours view</span>
-        <button id="resetLive" type="button">Return to live</button>
+      <section class="plaque">
+        <div class="plaque-info">
+          <span class="caption-index">01 · THE EXCHANGE</span>
+          <p id="heroDescription">The exchange sleeps.<br />The city doesn’t.</p>
+        </div>
+        <div class="countdown-panel" aria-labelledby="countdownLabel">
+          <span id="countdownLabel">Next opening bell</span>
+          <strong id="marketClock">--:--:--</strong>
+          <span class="countdown-hours">09:30–16:00 ET</span>
+        </div>
       </section>
-
-      <div class="scroll-cue" aria-hidden="true"><span>Explore the building</span><i></i></div>
 
       <aside class="person-card" id="personCard" aria-hidden="true" aria-live="polite">
         <button class="panel-close" id="closePerson" type="button" aria-label="Close person story">×</button>
@@ -107,7 +164,7 @@
         <div class="drawer-header">
           <div>
             <span>Robinhood Chain · 4663</span>
-            <h2 id="tradeTitle"><span data-token-symbol>$BELL</span> / ETH</h2>
+            <h2 id="tradeTitle"><span data-token-symbol>$TRADFI</span> / ETH</h2>
           </div>
           <button class="panel-close" id="closeTrade" type="button" aria-label="Close trading panel">×</button>
         </div>
@@ -128,14 +185,14 @@
             <span id="amountCurrency">ETH</span>
           </span>
         </label>
-        <div class="trade-fact"><span>Token</span><strong id="tokenStatus">Awaiting contract</strong></div>
+        <div class="trade-fact"><span>Token</span><strong id="tokenStatus">Awaiting mainnet launch</strong></div>
         <div class="trade-fact"><span>Network</span><strong>Robinhood Chain</strong></div>
         <button class="trade-submit" id="tradeSubmit" type="button" disabled><span id="tradeSubmitLabel">Returns at the opening bell</span><span>↗</span></button>
         <p id="tradeNote">The visual preview never changes real trading availability.</p>
       </aside>
 
       <footer class="footer-bar">
-        <span>Built on Robinhood Chain</span>
+        <span>Gated on Robinhood Chain · Uniswap v4</span>
         <span>Core hours 09:30–16:00 ET</span>
         <a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noreferrer">Explorer ↗</a>
       </footer>

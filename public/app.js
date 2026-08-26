@@ -132,13 +132,37 @@ function closePersonCard() {
   personCard.setAttribute('aria-hidden', 'true');
 }
 
+function tryPlay(video) {
+  if (!video.paused && !video.ended) return;
+  const attempt = () => video.play().catch(() => {});
+  if (video.readyState >= 2) {
+    attempt();
+  } else {
+    video.addEventListener('loadeddata', attempt, { once: true });
+    video.load();
+  }
+}
+
 function syncVideoPlayback() {
   const mix = getNightMix();
   const wantDay = mix < 1;
   const wantNight = mix > 0;
-  if (wantDay) videoDay.play().catch(() => {});
-  if (wantNight) videoNight.play().catch(() => {});
+  videoDay.preload = wantDay ? 'auto' : 'metadata';
+  videoNight.preload = wantNight ? 'auto' : 'metadata';
+  if (wantDay) tryPlay(videoDay);
+  if (wantNight) tryPlay(videoNight);
 }
+
+// Browsers (esp. two competing autoplay <video> elements) can silently drop
+// or interrupt an autoplay attempt with no error and no retry. Without this,
+// a dropped attempt leaves the video permanently frozen on its poster frame
+// forever -- which, since the poster is a static shot, looks identical to
+// the old flat-image design even though the new build is fully deployed.
+setInterval(() => {
+  const mix = getNightMix();
+  if (mix < 1) tryPlay(videoDay);
+  if (mix > 0) tryPlay(videoNight);
+}, 4000);
 
 function renderView() {
   experience.dataset.view = activeView;
@@ -345,6 +369,10 @@ document.querySelector('#building').addEventListener('pointermove', (event) => {
   const y = ((event.clientY - rect.top) / rect.height - .5) * -6;
   experience.style.setProperty('--px', `${x}px`);
   experience.style.setProperty('--py', `${y}px`);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncVideoPlayback();
 });
 
 requestAnimationFrame(() => requestAnimationFrame(() => experience.classList.add('ready')));

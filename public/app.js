@@ -35,7 +35,10 @@ const people = {
 
 let publicConfig = null;
 let marketStatus = null;
-let activeView = 'live';
+let activeView = (() => {
+  const v = new URLSearchParams(location.search).get('view');
+  return v === 'open' || v === 'closed' ? v : 'live';
+})();
 let selectedSide = 'buy';
 let toastTimer;
 let planeTimer;
@@ -98,6 +101,7 @@ function trafficDescriptor(level) {
 }
 
 function renderSystems() {
+  if (!trafficSub || !subwayGauge || !subwaySub) return;
   const hour = representativeHour();
   const level = trafficLevel(hour);
   const activeTicks = Math.max(1, Math.round(level * trafficTicks.length));
@@ -171,14 +175,15 @@ function renderView() {
   const state = visibleState();
   personHotspots.classList.toggle('state-open', state === 'open');
   personHotspots.classList.toggle('state-closed', state !== 'open');
-  document.querySelector('#viewLabel').textContent = activeView === 'live'
+  const viewLabel = document.querySelector('#viewLabel');
+  if (viewLabel) viewLabel.textContent = activeView === 'live'
     ? 'Live'
     : `Previewing ${state === 'open' ? 'market-open' : 'after-hours'}`;
   document.querySelector('#heroLineOne').textContent = state === 'open' ? 'ON THE' : 'OFF THE';
   document.querySelector('#heroLineTwo').textContent = state === 'open' ? 'FLOOR.' : 'CLOCK.';
   document.querySelector('#heroDescription').innerHTML = state === 'open'
-    ? 'Every desk is live.<br />The building is at work.'
-    : 'The exchange sleeps.<br />The city doesn’t.';
+    ? 'The bell has rung.<br />Swaps clear until four.'
+    : 'The exchange is shut.<br />The city isn’t.';
   renderSystems();
   syncVideoPlayback();
   closePersonCard();
@@ -341,7 +346,10 @@ async function connectWallet() {
 viewButtons.forEach((button) => button.addEventListener('click', () => { activeView = button.dataset.viewButton; renderView(); }));
 document.querySelector('#resetLive').addEventListener('click', () => { activeView = 'live'; renderView(); });
 personTargets.forEach((target) => target.addEventListener('click', () => openPersonCard(target.dataset.person)));
-document.querySelector('#openStory').addEventListener('click', () => openPersonCard(visibleState() === 'open' ? 'ivy' : 'mo'));
+/* '#openStory' lived in the nav that the landing rebuild removed. Bind it only
+   if some other surface still renders it, instead of throwing on load. */
+const openStoryBtn = document.querySelector('#openStory');
+if (openStoryBtn) openStoryBtn.addEventListener('click', () => openPersonCard(visibleState() === 'open' ? 'ivy' : 'mo'));
 document.querySelector('#closePerson').addEventListener('click', closePersonCard);
 document.querySelector('#openTrade').addEventListener('click', () => setTradeDrawer(true));
 document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
@@ -377,6 +385,13 @@ document.addEventListener('visibilitychange', () => {
 
 requestAnimationFrame(() => requestAnimationFrame(() => experience.classList.add('ready')));
 
+/* Paint the view once up front. renderView() used to run only off the back of
+   a successful chain read, so a ?view= override - or any failed read - left the
+   page frozen on its markup defaults (night video, night copy) no matter what
+   state it was actually meant to show. */
+renderView();
+updateClock();
+
 setInterval(updateClock, 1000);
 setInterval(loadRuntime, 60000);
 setInterval(verifyOnChain, 45000);
@@ -384,36 +399,89 @@ loadRuntime();
 schedulePlane();
 
 
-/* ---- the building's ticker board ----------------------------------------
-   Real HTML text welded over the board inside the hero. The board painted
-   into the video is generated noise: it strobes and it never said anything.
-   This mirrors values the page already computes, so it can't drift or lie. */
-(function boardTape() {
-  const tracks = Array.from(document.querySelectorAll('[data-board-track]'));
-  if (!tracks.length) return;
+/* ---- the hero overlay layer ---------------------------------------------
+   The stage is now the whole viewport and the video covers it, so the video's
+   rendered rect is usually bigger than the stage. Everything welded to the
+   building (the boards, the people) lives inside #videoSpace, which is sized
+   here to that exact rect - so a percentage inside it means the same point of
+   the building at every window shape. */
+(function heroOverlay() {
+  const stage  = document.querySelector('#building');
+  const space  = document.querySelector('#videoSpace');
+  const tracks = [...document.querySelectorAll('[data-board-track]')];
+  const spots  = document.querySelector('.person-hotspots');
+  if (!stage || !space) return;
+
+  // the people belong in video space too, not stage space
+  if (spots && spots.parentElement !== space) space.appendChild(spots);
+
+  function sizeSpace() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    const scale = Math.max(w / 1280, h / 720);
+    space.style.width  = (1280 * scale) + 'px';
+    space.style.height = (720 * scale) + 'px';
+  }
+
   const read = (sel, fallback) => {
     const el = document.querySelector(sel);
     const t = el && el.textContent ? el.textContent.trim() : '';
-    return t && t !== '—' ? t : fallback;
+    return t && t !== '—' && !/unavailable|disabled/i.test(t) ? t : fallback;
   };
+
+  // price and 24h move come from the pool once it exists. Until then this
+  // shows a dash - never an invented number on a page about trading.
+  function tokenPrice() {
+    const cfg = (typeof publicConfig !== 'undefined' && publicConfig) || null;
+    if (cfg && cfg.price) return String(cfg.price);
+    return '—';
+  }
+  function tokenChange() {
+    const cfg = (typeof publicConfig !== 'undefined' && publicConfig) || null;
+    if (cfg && (cfg.change24h || cfg.change24h === 0)) {
+      const n = Number(cfg.change24h);
+      return { text: (n >= 0 ? '+' : '') + n.toFixed(2) + '%', up: n >= 0 };
+    }
+    return null;
+  }
+
   function paint() {
-    const open = document.querySelector('#marketStateLabel');
-    const isOpen = open && /open/i.test(open.textContent || '');
-    let session = read('#marketReason', '');
-    if (!session || /unavailable|disabled/i.test(session)) session = 'NYSE CORE 09:30–16:00 ET';
-    const cells = [
-      ['SESSION', session],
-      ['MARKET', isOpen ? 'OPEN' : 'CLOSED'],
-      [isOpen ? 'CLOSES IN' : 'NEXT OPEN', read('#marketClock', '—')],
-      ['NEW YORK', read('#newYorkTime', '--:--:-- ET')],
-      ['TOKEN', read('[data-token-symbol]', '$TRADFI')],
-      ['TRADING', isOpen ? 'ENABLED ON-CHAIN' : 'GATED BY THE HOOK']
-    ];
-    const run = cells
-      .map(([k, v]) => `<span><em>${k}</em> ${v}</span><i></i>`)
-      .join('');
+    if (!tracks.length) return;
+    const open = (typeof visibleState === 'function') ? visibleState() === 'open' : false;
+    const sym  = read('[data-token-symbol]', '$TRADFI');
+    const chg  = tokenChange();
+
+    const cells = open
+      ? [
+          ['', 'MARKET OPEN'],
+          ['TRADING', 'LIVE ON-CHAIN'],
+          [sym, tokenPrice()],
+          ['24H', chg ? chg.text : '—'],
+          ['NEW YORK', read('#newYorkTime', '--:--:-- ET')],
+          ['SUPPLY', '1,792,000,000'],
+          ['POOL FEE', '1%']
+        ]
+      : [
+          ['', 'MARKET CLOSED'],
+          ['NEXT OPEN', read('#marketClock', '--:--:--')],
+          [sym, tokenPrice()],
+          ['24H', chg ? chg.text : '—'],
+          ['NEW YORK', read('#newYorkTime', '--:--:-- ET')],
+          ['SUPPLY', '1,792,000,000'],
+          ['POOL FEE', '1%']
+        ];
+
+    const run = cells.map(([k, v]) => {
+      const cls = (k === '24H' && chg) ? (chg.up ? ' class="up"' : ' class="dn"') : '';
+      return (k ? `<span><em>${k}</em> <b${cls}>${v}</b></span>` : `<span><b>${v}</b></span>`) + '<i></i>';
+    }).join('');
     tracks.forEach((t) => { t.innerHTML = run + run; });
   }
+
+  sizeSpace();
   paint();
+  window.addEventListener('resize', sizeSpace);
+  window.addEventListener('orientationchange', sizeSpace);
+  if (window.ResizeObserver) new ResizeObserver(sizeSpace).observe(stage);
   setInterval(paint, 1000);
 })();

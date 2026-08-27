@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
-    <link rel="preload" as="image" href="/assets/exchange-day-v2.jpg" />
-    <link rel="preload" as="image" href="/assets/exchange-night-v2.jpg" />
+    <link rel="preload" as="image" href="/assets/exchange-tower-v2.jpg" />
+    <link rel="preload" as="image" href="/assets/exchange-tower-night-v2.jpg" />
     <link rel="stylesheet" href="/styles.css?v=4" />
     <script src="/app.js?v=4" defer></script>
   </head>
@@ -23,13 +23,6 @@
           <span class="wordmark-sub">the memecoin that keeps banker's hours</span>
         </a>
 
-        <nav class="main-nav" aria-label="Primary navigation">
-          <button type="button" data-view-button="open">Market open</button>
-          <button type="button" data-view-button="closed">After hours</button>
-          <button class="active" type="button" data-view-button="live">Live view</button>
-          <button type="button" id="openStory">The people</button>
-        </nav>
-
         <div class="top-actions">
           <button class="wallet-button" id="walletButton" type="button">
             <span class="wallet-status"></span>
@@ -39,26 +32,7 @@
         </div>
       </header>
 
-      <div class="ticker-tape" aria-hidden="true">
-        <div class="ticker-track" id="tickerTrack">
-          <span>TRADFI · <span data-token-symbol>$TRADFI</span></span>
-          <span class="ticker-dot"></span>
-          <span>SUPPLY 1,792,000,000</span>
-          <span class="ticker-dot"></span>
-          <span>POOL FEE 1%</span>
-          <span class="ticker-dot"></span>
-          <span>LP LOCKED FOREVER</span>
-          <span class="ticker-dot"></span>
-          <span id="tickerMarket">READING CHAIN…</span>
-          <span class="ticker-dot"></span>
-          <span id="tickerNext">—</span>
-          <span class="ticker-dot"></span>
-          <span>GATED IN THE HOOK, NOT THE TOKEN</span>
-          <span class="ticker-dot"></span>
-        </div>
-      </div>
-
-      <div class="status-line">
+      <div class="sr-live" aria-live="polite">
         <span class="market-dot"></span>
         <span id="marketStateLabel">Market closed</span>
         <span class="status-sep">·</span>
@@ -70,8 +44,7 @@
         </button>
       </div>
 
-      <section class="city-frame" aria-labelledby="heroTitle">
-        <div class="frame-inner" id="building" aria-label="Living Manhattan exchange building">
+      <section class="stage" id="building" aria-labelledby="heroTitle" aria-label="Living Manhattan exchange building">
           <video class="scene-plane scene-day" id="videoDay" muted loop playsinline autoplay preload="metadata" poster="/assets/exchange-tower-v2.jpg" aria-hidden="true">
             <source src="/assets/exchange-tower-v2.webm" type="video/webm" />
             <source src="/assets/exchange-tower-v2.mp4" type="video/mp4" />
@@ -80,8 +53,10 @@
             <source src="/assets/exchange-tower-night-v2.webm" type="video/webm" />
             <source src="/assets/exchange-tower-night-v2.mp4" type="video/mp4" />
           </video>
-          <div class="board-tape board-day" aria-hidden="true"><div class="board-track" data-board-track></div></div>
-          <div class="board-tape board-night" aria-hidden="true"><div class="board-track" data-board-track></div></div>
+          <div class="video-space" id="videoSpace" aria-hidden="true">
+            <div class="board-tape board-day"><div class="board-track" data-board-track></div></div>
+            <div class="board-tape board-night"><div class="board-track" data-board-track></div></div>
+          </div>
           <div class="atmosphere atmosphere-day" aria-hidden="true"></div>
           <div class="atmosphere atmosphere-night" aria-hidden="true"></div>
           <div class="scene-vignette" aria-hidden="true"></div>
@@ -107,22 +82,24 @@
 
           <h1 class="frame-title" id="heroTitle"><span id="heroLineOne">OFF THE</span> <span id="heroLineTwo">CLOCK.</span></h1>
 
-          <div class="gauge-card gauge-traffic" id="trafficGauge">
-            <span class="gauge-label">Street traffic</span>
-            <div class="gauge-ticks" id="trafficTicks">
-              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-            </div>
-            <span class="gauge-sub" id="trafficSub">Reading FDR Dr…</span>
-          </div>
-
-          <div class="gauge-card gauge-subway" id="subwayGauge">
-            <span class="gauge-label">4 line · subway</span>
-            <div class="gauge-dots" id="subwayDots">
-              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-            </div>
-            <span class="gauge-sub" id="subwaySub">Reading platform…</span>
-          </div>
+          <div class="ticker-tape" aria-hidden="true">
+        <div class="ticker-track" id="tickerTrack">
+          <span>TRADFI · <span data-token-symbol>$TRADFI</span></span>
+          <span class="ticker-dot"></span>
+          <span>SUPPLY 1,792,000,000</span>
+          <span class="ticker-dot"></span>
+          <span>POOL FEE 1%</span>
+          <span class="ticker-dot"></span>
+          <span>LP LOCKED FOREVER</span>
+          <span class="ticker-dot"></span>
+          <span id="tickerMarket">READING CHAIN…</span>
+          <span class="ticker-dot"></span>
+          <span id="tickerNext">—</span>
+          <span class="ticker-dot"></span>
+          <span>GATED IN THE HOOK, NOT THE TOKEN</span>
+          <span class="ticker-dot"></span>
         </div>
+      </div>
       </section>
 
       <section class="chain-proof" aria-labelledby="chainProofTitle">

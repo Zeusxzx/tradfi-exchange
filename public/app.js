@@ -382,3 +382,38 @@ setInterval(loadRuntime, 60000);
 setInterval(verifyOnChain, 45000);
 loadRuntime();
 schedulePlane();
+
+
+/* ---- the building's ticker board ----------------------------------------
+   Real HTML text welded over the board inside the hero. The board painted
+   into the video is generated noise: it strobes and it never said anything.
+   This mirrors values the page already computes, so it can't drift or lie. */
+(function boardTape() {
+  const track = document.getElementById('boardTrack');
+  if (!track) return;
+  const read = (sel, fallback) => {
+    const el = document.querySelector(sel);
+    const t = el && el.textContent ? el.textContent.trim() : '';
+    return t && t !== '—' ? t : fallback;
+  };
+  function paint() {
+    const open = document.querySelector('#marketStateLabel');
+    const isOpen = open && /open/i.test(open.textContent || '');
+    let session = read('#marketReason', '');
+    if (!session || /unavailable|disabled/i.test(session)) session = 'NYSE CORE 09:30–16:00 ET';
+    const cells = [
+      ['SESSION', session],
+      ['MARKET', isOpen ? 'OPEN' : 'CLOSED'],
+      [isOpen ? 'CLOSES IN' : 'NEXT OPEN', read('#marketClock', '—')],
+      ['NEW YORK', read('#newYorkTime', '--:--:-- ET')],
+      ['TOKEN', read('[data-token-symbol]', '$TRADFI')],
+      ['TRADING', isOpen ? 'ENABLED ON-CHAIN' : 'GATED BY THE HOOK']
+    ];
+    const run = cells
+      .map(([k, v]) => `<span><em>${k}</em> ${v}</span><i></i>`)
+      .join('');
+    track.innerHTML = run + run;
+  }
+  paint();
+  setInterval(paint, 1000);
+})();

@@ -71,10 +71,31 @@ code { font-family: "IBM Plex Mono", monospace; color: var(--amber); background:
 .return-live-chip { display: none; margin-left: 8px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--paper); background: rgba(245,241,232,.04); font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
 .experience:not([data-view="live"]) .return-live-chip { display: inline-flex; }
 
+/* the live board — real HTML text laid over the building's ticker wall.
+   Percentages are of .frame-inner, which is now pinned to the video's own
+   16:9, so this stays welded to the board at every screen size. */
+.board-tape {
+  position: absolute; left: 33.44%; top: 38.75%; width: 31.09%; height: 5%;
+  z-index: 6; overflow: hidden; display: flex; align-items: center;
+  background: rgba(4, 7, 11, .82); box-shadow: inset 0 0 0 1px rgba(255,178,56,.16);
+  border-radius: 1px; pointer-events: none;
+}
+.board-track {
+  display: flex; gap: 2.4cqw; white-space: nowrap; padding-left: 100%;
+  font-size: clamp(6px, .92cqw, 15px); letter-spacing: .11em; line-height: 1;
+  color: var(--amber); font-variant-numeric: tabular-nums;
+  animation: boardScroll 42s linear infinite; will-change: transform;
+}
+.board-track span { display: inline-flex; align-items: center; gap: .5em; }
+.board-track em { font-style: normal; color: rgba(245,241,232,.72); }
+.board-track i { width: .28em; height: .28em; border-radius: 50%; background: var(--amber-dim); }
+@keyframes boardScroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .board-track { animation: none; padding-left: .6em; } }
+
 /* ---------- the framed city stage ---------- */
-.city-frame { position: relative; z-index: 5; padding: 0 clamp(16px, 3vw, 48px); }
+.city-frame { position: relative; z-index: 5; padding: 0 clamp(16px, 3vw, 48px); max-width: 1536px; margin-inline: auto; }
 .frame-inner {
-  position: relative; height: min(66vh, 680px); min-height: 400px;
+  position: relative; aspect-ratio: 16 / 9; height: auto; container-type: inline-size;
   border-radius: 26px; overflow: hidden; isolation: isolate;
   border: 1px solid rgba(245,241,232,.14); background: #0b1017;
   box-shadow: 0 50px 130px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,178,56,.05);
@@ -236,7 +257,7 @@ video.scene-plane {
 
 @media (max-width: 1050px) {
   .main-nav button:first-child, .main-nav button:nth-child(2) { display: none; }
-  .frame-inner { height: min(60vh, 600px); }
+  .frame-inner { height: auto; }
   .gauge-card { width: min(150px, 38vw); }
   .wordmark-sub { display: none; }
 }
@@ -248,7 +269,7 @@ video.scene-plane {
   .main-nav button[data-view-button="live"], .main-nav button#openStory { display: block !important; }
   .status-line { padding: 0 14px 12px; font-size: 8px; }
   .city-frame { padding: 0 12px; }
-  .frame-inner { height: 44vh; min-height: 320px; border-radius: 20px; }
+  .frame-inner { height: auto; min-height: 0; border-radius: 20px; }
   .frame-title { font-size: 12px; padding: 6px 12px; }
   .gauge-card { position: static; width: auto; margin: 0; border-radius: 14px; }
   .frame-inner > .gauge-card { position: absolute; bottom: 10px; width: min(132px, 42vw); padding: 9px 10px; }

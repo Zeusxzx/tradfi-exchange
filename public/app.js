@@ -389,8 +389,8 @@ schedulePlane();
    into the video is generated noise: it strobes and it never said anything.
    This mirrors values the page already computes, so it can't drift or lie. */
 (function boardTape() {
-  const track = document.getElementById('boardTrack');
-  if (!track) return;
+  const tracks = Array.from(document.querySelectorAll('[data-board-track]'));
+  if (!tracks.length) return;
   const read = (sel, fallback) => {
     const el = document.querySelector(sel);
     const t = el && el.textContent ? el.textContent.trim() : '';
@@ -412,7 +412,7 @@ schedulePlane();
     const run = cells
       .map(([k, v]) => `<span><em>${k}</em> ${v}</span><i></i>`)
       .join('');
-    track.innerHTML = run + run;
+    tracks.forEach((t) => { t.innerHTML = run + run; });
   }
   paint();
   setInterval(paint, 1000);

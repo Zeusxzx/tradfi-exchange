@@ -65,10 +65,12 @@ function etHourDecimal() {
 function getNightMix() {
   if (activeView === 'open') return 0;
   if (activeView === 'closed') return 1;
-  const minutes = etHourDecimal() * 60;
-  if (minutes >= 20 * 60 || minutes < 6 * 60) return 1;
-  if (minutes < 16 * 60) return 0;
-  return Math.min(1, Math.max(0, (minutes - 16 * 60) / (4 * 60)));
+  // The building follows the MARKET, not the sun. This used to be a daylight
+  // curve (day 06:00-16:00 ET, dusk fade to 20:00), which showed the lit,
+  // full trading floor at 7am on a Saturday - market shut, building busy.
+  // Open means day. Shut means night. The 1.8s opacity transition on
+  // .scene-night makes the bell itself the cross-fade.
+  return marketStatus && marketStatus.isOpen ? 0 : 1;
 }
 
 function trafficLevel(hour) {
@@ -115,6 +117,7 @@ function renderSystems() {
 }
 
 function schedulePlane() {
+  if (!planeSprite || !skyTag || !skyStatus) return;
   clearTimeout(planeTimer);
   const delay = 40000 + Math.random() * 140000;
   planeTimer = setTimeout(() => {
@@ -445,37 +448,54 @@ schedulePlane();
     return null;
   }
 
+  /* The board is built once per state and then only has its VALUES updated.
+     It used to rewrite innerHTML every second, which tore down the marquee
+     rig the instant it was applied - the strip would run out of content and
+     snap back. Structure is stable; only the clock digits move. */
+  let builtFor = null;
+
+  function cellsFor(open) {
+    const sym = read('[data-token-symbol]', '$TRADFI');
+    return open
+      ? [['', 'MARKET OPEN', 'state'], ['TRADING', 'LIVE ON-CHAIN', 'gate'],
+         [sym, '', 'price'], ['24H', '', 'chg'],
+         ['NEW YORK', '', 'clock'], ['SUPPLY', '1,792,000,000', null], ['POOL FEE', '1%', null]]
+      : [['', 'MARKET CLOSED', 'state'], ['NEXT OPEN', '', 'next'],
+         [sym, '', 'price'], ['24H', '', 'chg'],
+         ['NEW YORK', '', 'clock'], ['SUPPLY', '1,792,000,000', null], ['POOL FEE', '1%', null]];
+  }
+
+  function build(open) {
+    const html = cellsFor(open).map(([k, v, key]) => {
+      const val = `<b${key ? ` data-v="${key}"` : ''}>${v}</b>`;
+      return (k ? `<span><em>${k}</em> ${val}</span>` : `<span>${val}</span>`) + '<i></i>';
+    }).join('');
+    tracks.forEach((t) => { t._marqueeSource = null; t.innerHTML = html; });
+    builtFor = open ? 'open' : 'closed';
+    if (typeof window.__marqueeRig === 'function') window.__marqueeRig();
+  }
+
+  function values(open) {
+    const chg = tokenChange();
+    return {
+      price: tokenPrice(),
+      chg: chg ? chg.text : '—',
+      clock: read('#newYorkTime', '--:--:-- ET'),
+      next: read('#marketClock', '--:--:--')
+    };
+  }
+
   function paint() {
     if (!tracks.length) return;
     const open = (typeof visibleState === 'function') ? visibleState() === 'open' : false;
-    const sym  = read('[data-token-symbol]', '$TRADFI');
-    const chg  = tokenChange();
-
-    const cells = open
-      ? [
-          ['', 'MARKET OPEN'],
-          ['TRADING', 'LIVE ON-CHAIN'],
-          [sym, tokenPrice()],
-          ['24H', chg ? chg.text : '—'],
-          ['NEW YORK', read('#newYorkTime', '--:--:-- ET')],
-          ['SUPPLY', '1,792,000,000'],
-          ['POOL FEE', '1%']
-        ]
-      : [
-          ['', 'MARKET CLOSED'],
-          ['NEXT OPEN', read('#marketClock', '--:--:--')],
-          [sym, tokenPrice()],
-          ['24H', chg ? chg.text : '—'],
-          ['NEW YORK', read('#newYorkTime', '--:--:-- ET')],
-          ['SUPPLY', '1,792,000,000'],
-          ['POOL FEE', '1%']
-        ];
-
-    const run = cells.map(([k, v]) => {
-      const cls = (k === '24H' && chg) ? (chg.up ? ' class="up"' : ' class="dn"') : '';
-      return (k ? `<span><em>${k}</em> <b${cls}>${v}</b></span>` : `<span><b>${v}</b></span>`) + '<i></i>';
-    }).join('');
-    tracks.forEach((t) => { t.innerHTML = run + run; });
+    if (builtFor !== (open ? 'open' : 'closed')) build(open);
+    const v = values(open);
+    const chg = tokenChange();
+    document.querySelectorAll('[data-board-track] [data-v]').forEach((n) => {
+      const k = n.getAttribute('data-v');
+      if (k in v && n.textContent !== v[k]) n.textContent = v[k];
+      if (k === 'chg') n.className = chg ? (chg.up ? 'up' : 'dn') : '';
+    });
   }
 
   sizeSpace();
@@ -484,4 +504,66 @@ schedulePlane();
   window.addEventListener('orientationchange', sizeSpace);
   if (window.ResizeObserver) new ResizeObserver(sizeSpace).observe(stage);
   setInterval(paint, 1000);
+})();
+
+
+/* ---- seamless marquees ---------------------------------------------------
+   A track that animates one copy of its content to -50% only looks continuous
+   if that copy is at least as wide as its container - otherwise the tail runs
+   out mid-loop, you get dead space, and it snaps back. Build two units, each
+   repeated until it fills the container, and travel exactly one unit. */
+(function marquees() {
+  const RIGS = [
+    { track: '#tickerTrack',    unit: 'ticker-unit', pxPerSec: 62, min: 24 },
+    { track: '[data-board-track]', unit: 'board-unit',  pxPerSec: 46, min: 20 }
+  ];
+
+  function rebuild(track, unitClass, pxPerSec, min) {
+    const box = track.parentElement;
+    if (!box || !box.clientWidth) return;
+
+    // the source run is captured once and cached on the node, because paint()
+    // rewrites the board's innerHTML every second
+    let source = track._marqueeSource;
+    const current = [...track.children].filter((n) => !n.classList.contains(unitClass));
+    if (current.length) source = track._marqueeSource = current.map((n) => n.cloneNode(true));
+    if (!source || !source.length) return;
+
+    track.style.animation = 'none';
+    track.textContent = '';
+
+    const unit = document.createElement('span');
+    unit.className = unitClass;
+    source.forEach((n) => unit.appendChild(n.cloneNode(true)));
+    track.appendChild(unit);
+
+    let guard = 0;
+    while (unit.scrollWidth < box.clientWidth && guard++ < 24) {
+      source.forEach((n) => unit.appendChild(n.cloneNode(true)));
+    }
+
+    const span = unit.getBoundingClientRect().width;
+    track.appendChild(unit.cloneNode(true));
+
+    const name = 'marquee' + Math.round(span);
+    const dur = Math.max(min, span / pxPerSec);
+    track.style.setProperty('--marquee-span', span + 'px');
+    track.style.animation = `marqueeRun ${dur}s linear infinite`;
+    void name;
+  }
+
+  function run() {
+    RIGS.forEach(({ track, unit, pxPerSec, min }) => {
+      document.querySelectorAll(track).forEach((t) => rebuild(t, unit, pxPerSec, min));
+    });
+  }
+
+  const style = document.createElement('style');
+  style.textContent = '@keyframes marqueeRun{from{transform:translateX(0)}to{transform:translateX(calc(var(--marquee-span) * -1))}}';
+  document.head.appendChild(style);
+
+  window.__marqueeRig = run;
+  run();
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(run, 180); });
 })();

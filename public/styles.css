@@ -54,7 +54,7 @@ code { font-family: "IBM Plex Mono", monospace; color: var(--amber); background:
 /* ---------- ticker tape : real scrolling motion ---------- */
 .ticker-tape { position: relative; z-index: 20; overflow: hidden; border-block: 1px solid var(--line); background: rgba(255,178,56,.04); margin: 10px 0 14px; }
 .ticker-track {
-  display: inline-flex; gap: 26px; padding: 9px 0; white-space: nowrap;
+  display: inline-flex; gap: 0; padding: 9px 0; white-space: nowrap;
   font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--amber);
   animation: tickerScroll 32s linear infinite;
 }
@@ -100,7 +100,7 @@ code { font-family: "IBM Plex Mono", monospace; color: var(--amber); background:
 .board-night .board-track em { color: rgba(158,212,74,.55); }
 .board-night .board-track i { background: rgba(158,212,74,.4); }
 .board-track {
-  display: flex; gap: 2.4cqw; white-space: nowrap; padding-left: 100%;
+  display: flex; gap: 0; white-space: nowrap; padding-left: 0;
   font-size: clamp(6px, .92cqw, 15px); letter-spacing: .11em; line-height: 1;
   color: var(--amber); font-variant-numeric: tabular-nums;
   animation: boardScroll 42s linear infinite; will-change: transform;
@@ -376,3 +376,14 @@ video.scene-plane {
 .board-track b { font-weight: 600; }
 .board-track b.up { color: #54b98a; }
 .board-track b.dn { color: #e2564d; }
+
+
+/* ---- marquee mechanics --------------------------------------------------
+   Both strips used to animate a single copy of their content by -50% (or
+   -100%), so once the copy had passed, the rest of the loop was blank and the
+   animation appeared to snap back and restart. JS now builds each track as two
+   identical units, each padded out to at least the container's width, and the
+   distance travelled is exactly one unit - trailing gap included - so the seam
+   never lands inside the visible area. */
+.ticker-unit { display: inline-flex; align-items: center; gap: 26px; padding-right: 26px; }
+.board-unit  { display: inline-flex; align-items: center; gap: 2.4cqw; padding-right: 2.4cqw; }

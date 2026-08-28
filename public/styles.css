@@ -1107,3 +1107,18 @@ html { background: var(--pw); }
   --pw-ink: #14171c; --pw-mid: #4a5058; --pw-dim: #838b96;
 }
 html, body { background: var(--pw); }
+
+/* Long enough to read, short enough not to run the page -- and it scrolls
+   inside itself if you want the rest. */
+.tape-rows, .book-rows {
+  max-height: 20.5em; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--pw-line) transparent;
+}
+.tape-rows::-webkit-scrollbar, .book-rows::-webkit-scrollbar { width: 8px; }
+.tape-rows::-webkit-scrollbar-track, .book-rows::-webkit-scrollbar-track { background: transparent; }
+.tape-rows::-webkit-scrollbar-thumb, .book-rows::-webkit-scrollbar-thumb {
+  background: var(--pw-line); border-radius: 4px;
+}
+.tape-rows::-webkit-scrollbar-thumb:hover, .book-rows::-webkit-scrollbar-thumb:hover { background: var(--pw-dim); }
+/* the column header stays put while the rows move under it */
+.tape-cols, .book-cols { position: sticky; top: 0; z-index: 2; }

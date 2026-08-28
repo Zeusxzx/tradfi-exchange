@@ -656,14 +656,14 @@ function renderTape(stats) {
   }
 
   const real = lastPrints.length > 0;
-  const prints = real ? lastPrints : samplePrints(22);
+  const prints = real ? lastPrints : samplePrints(40);
   rows.innerHTML = prints.map((t) => `<li class="${t.side === 'buy' ? 'buy' : 'sell'}">
     <span>${t.time}</span><span class="r p">${t.price}</span>
     <span class="r">${t.size}</span><span class="r s">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
   </li>`).join('');
 
   if (book) {
-    const levels = sampleBook(11);
+    const levels = sampleBook(20);
     const max = Math.max(...levels.map((l) => l.size));
     book.innerHTML = levels.map((l) => {
       const pct = Math.round((l.size / max) * 100);

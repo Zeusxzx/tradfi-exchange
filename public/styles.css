@@ -809,12 +809,7 @@ body { background: #20252c; }
 .floor-col .section-head { margin-bottom: 14px; }
 .floor-col .section-head h2 { font-size: clamp(22px, 2.4vw, 30px); }
 .floor-col.is-sample .tape, .floor-col.is-sample .book { position: relative; }
-.floor-col.is-sample .tape::after, .floor-col.is-sample .book::after {
-  content: "Sample"; position: absolute; top: 9px; right: 12px; z-index: 2;
-  padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,.10);
-  color: var(--slate-dim); font-family: var(--data); font-size: 9px;
-  letter-spacing: .14em; text-transform: uppercase; pointer-events: none;
-}
+
 .tape-rows { max-height: 296px; }
 .tape-rows li.buy .s, .tape-rows li.buy .p { color: var(--up); }
 .tape-rows li.sell .s, .tape-rows li.sell .p { color: var(--down); }
@@ -852,3 +847,101 @@ body { background: #20252c; }
 .specs dd { margin: 0; font-size: 14px; color: var(--slate-mid); }
 .specs code { background: rgba(255,255,255,.07); color: var(--slate-ink); padding: 1px 6px; border-radius: 3px; }
 @media (max-width: 620px) { .specs > div { grid-template-columns: 1fr; gap: 5px; } }
+
+
+/* ==========================================================================
+   LIGHT — the lower half again, in paper and grey rather than all-over slate.
+   White page, grey furniture. Later in the file than the slate block, so
+   these win without unpicking it.
+   ========================================================================== */
+:root {
+  --pw:      #ffffff;   /* page */
+  --pw-2:    #f4f5f7;   /* panel fill */
+  --pw-3:    #eceef2;   /* table head, chips */
+  --pw-line: #dfe2e8;
+  --pw-ink:  #14171c;
+  --pw-mid:  #4a5058;
+  --pw-dim:  #838b96;
+}
+body { background: var(--pw); }
+.paper {
+  background:
+    radial-gradient(1100px 460px at 8% -8%, rgba(20,23,28,.05), transparent 60%),
+    linear-gradient(180deg, #fbfbfc 0%, #ffffff 22%, #ffffff 78%, #f6f7f9 100%);
+  color: var(--pw-ink);
+}
+.paper section + section { border-top: 0; }
+.records { border-top: 1px solid var(--pw-line) !important; }
+
+.section-eyebrow, .section-note, .book-spread, .tape-state { color: var(--pw-dim); }
+.section-head h2, .records-sub, .pitch h2 { color: var(--pw-ink); }
+.pitch h2 em { color: #b3bac4; }
+.pitch p { color: var(--pw-mid); }
+
+.how-grid { background: var(--pw-line); border-color: var(--pw-line); }
+.how-grid article { background: var(--pw-2); }
+.how-n { color: var(--pw-dim); }
+.how-grid h3 { color: var(--pw-ink); }
+.how-grid p { color: var(--pw-mid); }
+
+/* the tape and the book: light panels, prices still green and red */
+.tape, .book { background: var(--pw-2); border-color: var(--pw-line); }
+.tape-cols, .book-cols { background: var(--pw-3); color: var(--pw-dim); border-bottom: 1px solid var(--pw-line); }
+.tape-rows li, .book-row { border-top: 1px solid var(--pw-line); color: var(--pw-ink); }
+.tape-rows li:first-child, .book-row:first-child { border-top: 0; }
+.tape-rows li:nth-child(even), .book-row:nth-child(even) { background: rgba(20,23,28,.018); }
+
+.book-row::before { opacity: .13; }
+
+/* the register: bigger, and it holds twenty */
+.listing-scroll { background: var(--pw-2); border-color: var(--pw-line); max-height: none; }
+.listing-table { font-size: 14.5px; }
+.listing-table th { background: var(--pw-3); border-bottom: 1px solid var(--pw-line); color: var(--pw-dim); padding: 13px 20px; }
+.listing-table td { border-bottom: 1px solid var(--pw-line); color: var(--pw-ink); padding: 15px 20px; }
+.listing-table tbody tr:nth-child(even) td { background: rgba(20,23,28,.018); }
+.listing-table .rank { color: var(--pw-dim); }
+.listing-empty td { color: var(--pw-dim); }
+.listing-meta { color: var(--pw-dim); }
+.listing-meta b { color: var(--pw-ink); }
+.listing-meta a { color: var(--pw-ink); border-bottom-color: var(--pw-line); }
+.tag { background: var(--pw-3); color: var(--pw-mid); }
+.listing-table td.num .barwrap { background: rgba(20,23,28,.09); }
+.bar { background: var(--pw-mid); }
+
+/* the build notes: reference material, so set like reference material */
+.records-sub { font-size: clamp(15px, 1.4vw, 18px); margin: clamp(30px, 3.4vw, 44px) 0 12px; color: var(--pw-mid); }
+.specs {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  background: var(--pw-line); border-color: var(--pw-line); border-radius: 9px;
+}
+.specs > div { background: var(--pw-2); padding: 9px 12px; grid-template-columns: 1fr; gap: 2px; }
+.specs dt { font-size: 8.5px; letter-spacing: .13em; color: var(--pw-dim); }
+.specs dd { font-size: 12px; line-height: 1.4; color: var(--pw-mid); }
+.specs code { background: var(--pw-3); color: var(--pw-ink); font-size: .92em; }
+.specs-link { font-size: 12.5px; color: var(--pw-mid); border-bottom-color: var(--pw-line); }
+.specs-link:hover { color: var(--pw-ink); }
+
+.footer-bar { background: var(--pw-3); border-top: 1px solid var(--pw-line); color: var(--pw-dim); }
+.footer-bar a { color: var(--pw-ink); }
+
+/* both hero panels are the same object at the same size */
+.hud-clock, .hud-card { width: min(298px, 42vw); min-width: 0; padding: 16px 18px 15px; }
+@media (max-width: 900px) { .hud-clock, .hud-card { width: auto; } }
+
+/* one sample marker per panel, in the heading where it cannot collide with
+   the column labels it was previously printing on top of */
+.sample-chip {
+  display: none; align-items: center; padding: 2px 8px; border-radius: 5px;
+  background: var(--pw-3); color: var(--pw-dim);
+  font-family: var(--data); font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+}
+.is-sample .sample-chip { display: inline-flex; }
+.records.is-sample .sample-chip { display: inline-flex; }
+.head-right { display: inline-flex; align-items: center; gap: 10px; }
+
+/* same object, same size: let the shorter panel take the taller one's height */
+.hud { align-items: stretch; }
+.hud-clock, .hud-card { display: flex; flex-direction: column; }
+.hud-stats { margin-top: auto; }
+.hud-card .hud-cta { margin-top: auto; }
+@media (max-width: 900px) { .hud { align-items: stretch; } }

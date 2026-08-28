@@ -540,7 +540,14 @@ async function loadTokenStats() {
 
   const body = document.querySelector('#holderRows');
   if (!body) return;
-  const rows = stats.topHolders || [];
+  const real = (stats.topHolders || []).filter((h) => h.share > 0.00001);
+  // Pre-launch the register is the deploy wallet and a burn address, which
+  // shows nothing about how the table reads full. Same rule as the tape:
+  // clearly marked sample until there is a real book behind it.
+  const useSample = real.length < 4;
+  const rows = useSample ? sampleHolders(20, stats.supply || 1792000000) : (stats.topHolders || []);
+  const records = document.querySelector('.records');
+  if (records) records.classList.toggle('is-sample', useSample);
   if (!rows.length) {
     body.innerHTML = '<tr class="listing-empty"><td colspan="4">The register opens with the book.</td></tr>';
     return;
@@ -608,6 +615,23 @@ function sampleBook(levels) {
                 size: Math.round((2000 + rnd() * 70000) / 100) * 100 });
   }
   return rows;
+}
+
+function sampleHolders(n, supply) {
+  let seed = 91;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const hex = () => '0x' + Array.from({ length: 40 }, () => '0123456789abcdef'[Math.floor(rnd() * 16)]).join('');
+  const weights = Array.from({ length: n }, (_, i) => 1 / Math.pow(i + 1.6, 1.25) + rnd() * .01)
+    .sort((a, b) => b - a);   // a register runs largest first, always
+  const total = weights.reduce((a, b) => a + b, 0);
+  return weights.map((w, i) => ({
+    rank: i + 1,
+    address: hex(),
+    isContract: i === 0,
+    label: null,
+    amount: Math.round((w / total) * supply),
+    share: w / total
+  }));
 }
 
 function renderTape(stats) {

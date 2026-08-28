@@ -197,7 +197,7 @@ async function getTokenStats() {
   const supply = token ? toUnits(token.total_supply, decimals) : null;
 
   const list = (holders && Array.isArray(holders.items) ? holders.items : [])
-    .slice(0, 12)
+    .slice(0, 20)
     .map((item, index) => {
       const amount = toUnits(item.value, decimals);
       return {

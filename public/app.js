@@ -440,7 +440,7 @@ const heroTrade = document.querySelector('#heroTrade');
 if (heroTrade) heroTrade.addEventListener('click', () => setTradeDrawer(true));
 document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
 drawerScrim.addEventListener('click', () => setTradeDrawer(false));
-walletButton.addEventListener('click', connectWallet);
+walletButton.addEventListener('click', connectAccount);
 
 document.querySelectorAll('[data-side]').forEach((tab) => tab.addEventListener('click', () => {
   selectedSide = tab.dataset.side;
@@ -801,17 +801,44 @@ function paintAccount() {
     </dl>`;
 }
 
+/* One wallet, two buttons. The masthead Connect and the panel's own button
+   were separate handlers, so connecting at the top left the panel below still
+   showing the example. They now share this, and both reflect the result. */
+async function adoptAccount(address) {
+  accountAddress = address;
+  const short = `${address.slice(0, 5)}…${address.slice(-4)}`;
+  const btn = document.querySelector('#accountConnect');
+  if (btn) btn.textContent = short;
+  if (walletButton) walletButton.classList.add('connected');
+  if (walletLabel) walletLabel.textContent = short;
+  accountBalance = await readBalance(address);
+  paintAccount();
+}
+
 async function connectAccount() {
   if (!window.ethereum) return showToast('No compatible EVM wallet found.');
   try {
     const accts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    if (!accts || !accts.length) return;
-    accountAddress = accts[0];
-    const btn = document.querySelector('#accountConnect');
-    if (btn) btn.textContent = 'Connected';
-    accountBalance = await readBalance(accountAddress);
-    paintAccount();
+    if (accts && accts.length) await adoptAccount(accts[0]);
   } catch { showToast('Wallet connection cancelled.'); }
+}
+
+/* if the wallet is already authorised, or the user switches account in it,
+   both places follow without a reload */
+if (window.ethereum) {
+  window.ethereum.request({ method: 'eth_accounts' })
+    .then((a) => { if (a && a.length) adoptAccount(a[0]); })
+    .catch(() => {});
+  if (window.ethereum.on) {
+    window.ethereum.on('accountsChanged', (a) => {
+      if (a && a.length) adoptAccount(a[0]);
+      else { accountAddress = null; accountBalance = null; paintAccount();
+             if (walletLabel) walletLabel.textContent = 'Connect';
+             if (walletButton) walletButton.classList.remove('connected');
+             const btn = document.querySelector('#accountConnect');
+             if (btn) btn.textContent = 'Connect wallet'; }
+    });
+  }
 }
 
 paintAccount();

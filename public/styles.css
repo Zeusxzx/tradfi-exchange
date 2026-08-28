@@ -1293,3 +1293,38 @@ html, body { background: var(--pw); }
 .wordmark-mark { width: 30px; height: 30px; flex: 0 0 auto; }
 /* and the whole lockup tucks into the corner */
 .masthead { padding-left: clamp(12px, 1.6vw, 22px) !important; padding-top: 12px !important; }
+
+
+/* ---- fifth pass ---------------------------------------------------------- */
+
+/* He was landing at the bottom of the whole section, level with the build
+   notes, because he shared a grid with all of it. Now the register and he are
+   their own row and the notes drop underneath, so they stand side by side. */
+.records { display: block; }
+.records-top {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(20px, 3vw, 56px); align-items: stretch;
+}
+.records-book { min-width: 0; display: flex; flex-direction: column; }
+/* the register is a block roughly as tall as he is, and scrolls inside */
+.records-book .listing-scroll {
+  flex: 1 1 auto; max-height: clamp(300px, 34vw, 470px); overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--pw-line) transparent;
+}
+.records-book .listing-table thead th { position: sticky; top: 0; z-index: 2; }
+.mascot-records {
+  position: static; align-self: end;
+  width: auto; height: clamp(340px, 38vw, 530px);
+  max-width: 40vw; object-fit: contain; object-position: bottom;
+}
+@media (max-width: 1080px) { .records-top { grid-template-columns: 1fr; } .mascot-records { display: none; } }
+
+/* beside the rail he matches the height of the three points he is saying */
+.mascot-rail {
+  width: auto; height: clamp(300px, 34vw, 470px);
+  max-width: 32vw; object-fit: contain; object-position: bottom left;
+}
+@media (min-width: 1081px) {
+  .how-rail { padding-left: clamp(200px, 20vw, 330px); }
+  .how-rail::before { left: calc(clamp(200px, 20vw, 330px) + 19px); }
+}

@@ -776,22 +776,28 @@ async function readBalance(addr) {
 
 function paintAccount() {
   const body = document.querySelector('#accountBody');
+  const panel = document.querySelector('#account');
   if (!body) return;
-  if (!accountAddress) {
-    body.innerHTML = '<p class="account-empty">Connect to see your position.</p>';
-    return;
-  }
   const supply = 1792000000;
-  const bal = accountBalance;
+  // Zeus has no EVM wallet, and a panel that says "connect to see it" shows
+  // nothing. So it renders a worked example, marked SAMPLE, and the real
+  // numbers replace it the moment a wallet is actually connected.
+  const demo = !accountAddress;
+  if (panel) panel.classList.toggle('is-sample', demo);
+  const addr = demo ? '0x8f2a7c4b19e6d0335a1c88be74f9021dcb35a7e1' : accountAddress;
+  const bal = demo ? 12_480_000 : accountBalance;
   const share = bal === null ? null : bal / supply;
-  const value = (bal !== null && lastQuotePrice) ? bal * lastQuotePrice : null;
+  const px0 = lastQuotePrice || 0.04125;
+  const value = bal !== null ? bal * px0 : null;
   body.innerHTML = `
-    <p class="account-addr">${accountAddress.slice(0, 6)}…${accountAddress.slice(-4)}</p>
+    <p class="account-addr">${addr.slice(0, 6)}…${addr.slice(-4)}</p>
     <dl class="account-rows">
       <div><dt>Position</dt><dd>${bal === null ? '—' : Math.round(bal).toLocaleString('en-US')}</dd></div>
       <div><dt>% outstanding</dt><dd>${share === null ? '—' : (share * 100).toFixed(share < 0.0001 ? 4 : 2) + '%'}</dd></div>
-      <div><dt>Last price</dt><dd>${lastQuotePrice ? px(lastQuotePrice) : '—'}</dd></div>
-      <div><dt>Value</dt><dd>${value === null ? '—' : value.toPrecision(5)}</dd></div>
+      <div><dt>Last price</dt><dd>${px(px0)}</dd></div>
+      <div><dt>Value</dt><dd>${value === null ? '—' : (value >= 1
+        ? value.toLocaleString('en-US', { maximumFractionDigits: 2 })
+        : value.toPrecision(5))}</dd></div>
     </dl>`;
 }
 
@@ -808,6 +814,7 @@ async function connectAccount() {
   } catch { showToast('Wallet connection cancelled.'); }
 }
 
+paintAccount();
 const accountConnect = document.querySelector('#accountConnect');
 if (accountConnect) accountConnect.addEventListener('click', connectAccount);
 

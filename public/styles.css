@@ -1211,3 +1211,85 @@ html, body { background: var(--pw); }
 .quote.is-sample .sample-chip { display: inline-flex; }
 /* he stands on the strip, not behind it */
 .mascot-hero { bottom: 34px; }
+
+
+/* ==========================================================================
+   Fourth pass: where he stands, how big, and a page that is not flat black.
+   ========================================================================== */
+
+/* the masthead mark: smaller, and tucked into the corner */
+.masthead { padding-top: 14px !important; }
+.wordmark { gap: 8px; align-items: center; }
+.wordmark-mark { width: 26px; height: 26px; }
+
+/* he is off the hero entirely */
+.mascot-hero { display: none !important; }
+
+/* beside the rail he stands to the LEFT of the numbers, and the numbers step
+   right to leave him the room, so he reads as the one saying them */
+.pitch { position: relative; }
+.mascot-rail {
+  left: 0; right: auto; bottom: 0;
+  width: clamp(120px, 12vw, 200px); opacity: .96;
+}
+@media (min-width: 1081px) {
+  .how-rail { padding-left: clamp(150px, 14vw, 240px); }
+  .how-rail::before { left: calc(clamp(150px, 14vw, 240px) + 19px); }
+}
+@media (max-width: 1080px) { .mascot-rail { display: none; } }
+
+/* the register sits left, he stands full height at its right */
+.records { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(20px, 3vw, 56px); align-items: end; }
+.records-main { min-width: 0; }
+.mascot-records {
+  position: static; align-self: end; justify-self: end;
+  width: clamp(150px, 15vw, 290px); opacity: .97;
+}
+@media (max-width: 1080px) { .records { grid-template-columns: 1fr; } .mascot-records { display: none; } }
+
+/* the supporting line is smaller, and centred under the statement */
+.pitch-top { text-align: left; }
+.pitch h2 { text-align: left; }
+/* only the line under the statement centres -- scoped, because an unscoped
+   .pitch p also caught the three rail paragraphs and centred those too */
+.pitch-top p {
+  text-align: center; margin-left: auto; margin-right: auto;
+  font-size: clamp(11px, 1.15vw, 17px); color: var(--pw-mid);
+  max-width: none; width: fit-content;
+}
+.how-rail p { text-align: left; margin-left: 0; margin-right: 0; width: auto; }
+
+/* both hero panels are one object at one size, height included */
+.hud { align-items: stretch; }
+.hud-clock, .hud-card {
+  width: min(300px, 42vw) !important; min-width: 0 !important;
+  display: flex; flex-direction: column;
+}
+
+/* not flat black. The page carries the same light the building does.
+   body follows the token, never a hardcoded colour -- hardcoding it is what
+   put a mismatched strip under the footer the first time. */
+html, body { background: var(--pw); }
+.experience[data-market="closed"] .paper, .experience[data-view="closed"] .paper {
+  background:
+    radial-gradient(900px 420px at 6% 0%, rgba(120,145,190,.14), transparent 58%),
+    radial-gradient(800px 400px at 96% 26%, rgba(80,105,150,.10), transparent 56%),
+    radial-gradient(1200px 600px at 50% 104%, rgba(140,160,200,.09), transparent 62%),
+    linear-gradient(180deg, #12161c 0%, #0d1014 30%, #0b0d10 62%, #10141a 100%);
+}
+.experience[data-market="open"] .paper, .experience[data-view="open"] .paper {
+  background:
+    radial-gradient(900px 420px at 6% 0%, rgba(20,23,28,.055), transparent 58%),
+    radial-gradient(1000px 500px at 92% 30%, rgba(20,23,28,.035), transparent 56%),
+    linear-gradient(180deg, #fbfbfd 0%, #ffffff 26%, #ffffff 74%, #f4f5f8 100%);
+}
+.account.is-sample .sample-chip { display: inline-flex; }
+.account .head-right { gap: 8px; }
+
+/* the mark sits beside the wordmark, not above it: .wordmark is a column by
+   default, so the text needs its own column and the row goes around both */
+.wordmark { flex-direction: row !important; align-items: center; gap: 9px; }
+.wordmark-text { display: flex; flex-direction: column; gap: 2px; }
+.wordmark-mark { width: 30px; height: 30px; flex: 0 0 auto; }
+/* and the whole lockup tucks into the corner */
+.masthead { padding-left: clamp(12px, 1.6vw, 22px) !important; padding-top: 12px !important; }

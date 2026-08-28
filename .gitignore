@@ -4,7 +4,13 @@ node_modules/
 coverage/
 playwright-report/
 test-results/
+# Source stills and scratch renders stay out of the repo, but the logo is a
+# shipped asset -- it was silently dropped by this rule and 404'd in prod.
 public/assets/*.png
+!public/assets/logo-full.png
+!public/assets/logo-mark.png
+!public/assets/apple-touch-icon.png
+!public/assets/favicon-32.png
 # these two are abandoned drafts, not a pattern. The old wildcard was
 # public/assets/*-v3.mp4, which silently swallowed any future -v3 asset.
 public/assets/exchange-day-v3.mp4

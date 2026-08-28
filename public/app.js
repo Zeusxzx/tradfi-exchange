@@ -247,6 +247,12 @@ setInterval(() => {
 
 function renderView() {
   experience.dataset.view = activeView;
+  // Mirror the state onto <html>. The theme tokens have to be reachable by
+  // <body> and the overscroll area, and those are ancestors of <main> -- a
+  // variable defined on a descendant cannot reach them, which is why the page
+  // kept a white strip below the footer in the dark theme.
+  document.documentElement.dataset.view = activeView;
+  document.documentElement.dataset.market = experience.dataset.market || 'closed';
   experience.style.setProperty('--night-mix', getNightMix().toFixed(3));
   viewButtons.forEach((button) => button.classList.toggle('active', button.dataset.viewButton === activeView));
   const state = visibleState();
@@ -316,6 +322,7 @@ function updateTrade() {
 
 function renderMarket() {
   experience.dataset.market = marketStatus.state;
+  document.documentElement.dataset.market = marketStatus.state;
   document.querySelector('#marketStateLabel').textContent = marketStatus.isOpen ? 'Market open' : 'Market closed';
   document.querySelector('#marketReason').textContent = `${marketStatus.reason} · ${marketStatus.coreHours}`;
   renderView();

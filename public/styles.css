@@ -1054,3 +1054,56 @@ body { background: var(--pw); }
 .book-cols, .book-row { padding: 13px 22px; font-size: 15px; }
 .tape, .book { border-radius: 14px; }
 @media (max-width: 940px) { .floor-grid { grid-template-columns: 1fr; } }
+
+
+/* ---- third pass ---------------------------------------------------------- */
+
+/* The statement is one line across the page, and the supporting line sits
+   directly under it as a second single line. It was wrapping because the
+   block was capped at 62ch; the cap is gone and the type scales to the
+   viewport so both stay on one line at any width. */
+.pitch-top { max-width: none; margin-bottom: clamp(38px, 4.6vw, 62px); }
+.pitch h2 {
+  max-width: none; white-space: nowrap;
+  font-size: clamp(21px, 5.15vw, 92px); line-height: 1.02; margin: 0 0 14px;
+}
+.pitch p {
+  max-width: none; white-space: nowrap;
+  font-size: clamp(11px, 1.72vw, 26px); margin: 0;
+}
+@media (max-width: 560px) {
+  .pitch h2, .pitch p { white-space: normal; }
+  .pitch h2 { font-size: clamp(30px, 9vw, 44px); }
+  .pitch p { font-size: 15px; }
+}
+
+/* the numbered discs: always the page's ink behind the page's paper, both ways */
+.how-rail .how-n {
+  background: var(--pw-ink) !important;
+  color: var(--pw) !important;
+  font-weight: 600;
+}
+
+/* the tape and the book were running too long */
+.tape-rows { max-height: 15.6em; overflow: hidden; }
+.book-rows { max-height: 15.6em; overflow: hidden; }
+
+/* No white strip under the footer. body had the light page colour baked in,
+   so in the dark theme the area below the last section showed through as a
+   band. Both the page and the footer now follow the same token. */
+body { background: var(--pw); transition: background-color 1.2s var(--ease); }
+.experience { background: var(--pw); }
+.footer-bar { background: var(--pw-3); }
+html { background: var(--pw); }
+
+/* the same tokens again on the root, so <body> and the overscroll area get
+   them too -- this is what removes the white strip under the footer */
+:root[data-market="closed"], :root[data-view="closed"] {
+  --pw: #0b0d10; --pw-2: #14171c; --pw-3: #1b1f25; --pw-line: #262b33;
+  --pw-ink: #f2f4f7; --pw-mid: #b3bcc8; --pw-dim: #7e8794;
+}
+:root[data-view="open"] {
+  --pw: #ffffff; --pw-2: #f4f5f7; --pw-3: #eceef2; --pw-line: #dfe2e8;
+  --pw-ink: #14171c; --pw-mid: #4a5058; --pw-dim: #838b96;
+}
+html, body { background: var(--pw); }

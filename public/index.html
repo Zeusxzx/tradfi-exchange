@@ -9,8 +9,8 @@
     <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/khand-700-latin.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/hind-400-latin.woff2" crossorigin />
     <link href="/assets/fonts.css" rel="stylesheet" />
-    <link rel="preload" as="image" href="/assets/exchange-tower-day-v12.jpg" />
-    <link rel="preload" as="image" href="/assets/exchange-tower-night-v12.jpg" />
+    <link rel="preload" as="image" href="/assets/exchange-tower-day-v13.jpg" />
+    <link rel="preload" as="image" href="/assets/exchange-tower-night-v13.jpg" />
     <link rel="stylesheet" href="/styles.css?v=4" />
     <script src="/app.js?v=4" defer></script>
   </head>
@@ -53,23 +53,23 @@
                at ~63ms against a 33ms budget) and reads as a tick. Instead the
                standby copy is pre-rolled at time 0 and handed the frame. -->
           <div class="scene-plane scene-day" id="videoDay" aria-hidden="true">
-            <video class="scene-layer is-live" muted playsinline autoplay preload="auto" poster="/assets/exchange-tower-day-v12.jpg">
-              <source src="/assets/exchange-tower-day-v12.webm" type="video/webm" />
-              <source src="/assets/exchange-tower-day-v12.mp4" type="video/mp4" />
+            <video class="scene-layer is-live" muted playsinline autoplay preload="auto" poster="/assets/exchange-tower-day-v13.jpg">
+              <source src="/assets/exchange-tower-day-v13.webm" type="video/webm" />
+              <source src="/assets/exchange-tower-day-v13.mp4" type="video/mp4" />
             </video>
             <video class="scene-layer" muted playsinline preload="auto">
-              <source src="/assets/exchange-tower-day-v12.webm" type="video/webm" />
-              <source src="/assets/exchange-tower-day-v12.mp4" type="video/mp4" />
+              <source src="/assets/exchange-tower-day-v13.webm" type="video/webm" />
+              <source src="/assets/exchange-tower-day-v13.mp4" type="video/mp4" />
             </video>
           </div>
           <div class="scene-plane scene-night" id="videoNight" aria-hidden="true">
-            <video class="scene-layer is-live" muted playsinline autoplay preload="auto" poster="/assets/exchange-tower-night-v12.jpg">
-              <source src="/assets/exchange-tower-night-v12.webm" type="video/webm" />
-              <source src="/assets/exchange-tower-night-v12.mp4" type="video/mp4" />
+            <video class="scene-layer is-live" muted playsinline autoplay preload="auto" poster="/assets/exchange-tower-night-v13.jpg">
+              <source src="/assets/exchange-tower-night-v13.webm" type="video/webm" />
+              <source src="/assets/exchange-tower-night-v13.mp4" type="video/mp4" />
             </video>
             <video class="scene-layer" muted playsinline preload="auto">
-              <source src="/assets/exchange-tower-night-v12.webm" type="video/webm" />
-              <source src="/assets/exchange-tower-night-v12.mp4" type="video/mp4" />
+              <source src="/assets/exchange-tower-night-v13.webm" type="video/webm" />
+              <source src="/assets/exchange-tower-night-v13.mp4" type="video/mp4" />
             </video>
           </div>
           <div class="video-space" id="videoSpace" aria-hidden="true">
@@ -119,20 +119,18 @@
         <section class="pitch">
           <div class="pitch-top">
             <h2>The market closes. <em>So does the coin.</em></h2>
-            <p>9:30 AM to 4:00 PM, New York time. Outside those hours nobody trades it —
-              not you, and not a bot running at three in the morning.</p>
+            <p>9:30 AM to 4:00 PM, New York time. Outside those hours, nobody trades it.</p>
           </div>
           <ol class="how-rail">
             <li>
               <span class="how-n">01</span>
               <div><h3>It keeps hours</h3>
-                <p>Opens with the bell, shuts with the bell. It follows the New York Stock
-                  Exchange calendar — weekends and holidays off, 1:00 PM on half days.</p></div>
+                <p>Opens at 9:30 AM. Shuts at 4:00 PM. New York time.</p></div>
             </li>
             <li>
               <span class="how-n">02</span>
               <div><h3>Nobody holds a key</h3>
-                <p>The hours live in the contract. No off switch, no admin, no exceptions.</p></div>
+                <p>The hours live in the contract. At 9:30 it opens itself, at 4:00 it closes itself.</p></div>
             </li>
             <li>
               <span class="how-n">03</span>

@@ -83,71 +83,94 @@
           <div class="grain" aria-hidden="true"></div>
 
 
+          <div class="hud">
+            <!-- left: the number that matters, and the four that back it up -->
+            <section class="hud-clock" aria-labelledby="hudClockLabel">
+              <span class="hud-label" id="hudClockLabel" data-clock-label>Opens in</span>
+              <strong class="hud-time" id="hudTime">--:--:--</strong>
+              <span class="hud-sub" id="hudSub">9:30 AM – 4:00 PM ET</span>
+              <dl class="hud-stats">
+                <div><dt>Market cap</dt><dd data-stat="marketCap">—</dd></div>
+                <div><dt>24h volume</dt><dd data-stat="volume24h">—</dd></div>
+                <div><dt>Holders</dt><dd data-stat="holders">—</dd></div>
+                <div><dt>Supply</dt><dd data-stat="supply">—</dd></div>
+              </dl>
+            </section>
 
-          <h1 class="frame-title" id="heroTitle"><span id="heroLineOne">OFF THE</span> <span id="heroLineTwo">CLOCK.</span></h1>
+            <!-- right: the whole pitch, in as few words as it takes -->
+            <aside class="hud-card" aria-labelledby="hudCardTitle">
+              <span class="hud-label">What this is</span>
+              <h1 class="hud-title" id="hudCardTitle">A coin that keeps<br />market hours.</h1>
+              <p class="hud-copy">You can only trade <span data-token-symbol>$TRADFI</span> while the
+                New York Stock Exchange is open. After the closing bell the contract
+                itself refuses the trade.</p>
+              <button class="hud-cta" id="heroTrade" type="button">
+                <span id="heroTradeLabel">Trade</span><span aria-hidden="true">↗</span>
+              </button>
+              <span class="hud-foot" id="heroTradeFoot">Robinhood Chain · Uniswap v4</span>
+            </aside>
+          </div>
 
           <div class="ticker-tape" aria-hidden="true">
-        <div class="ticker-track" id="tickerTrack">
-          <span>TRADFI · <span data-token-symbol>$TRADFI</span></span>
-          <span class="ticker-dot"></span>
-          <span>SUPPLY 1,792,000,000</span>
-          <span class="ticker-dot"></span>
-          <span>POOL FEE 1%</span>
-          <span class="ticker-dot"></span>
-          <span>LP LOCKED FOREVER</span>
-          <span class="ticker-dot"></span>
-          <span id="tickerMarket">READING CHAIN…</span>
-          <span class="ticker-dot"></span>
-          <span id="tickerNext">—</span>
-          <span class="ticker-dot"></span>
-          <span>GATED IN THE HOOK, NOT THE TOKEN</span>
-          <span class="ticker-dot"></span>
-        </div>
+        <div class="ticker-track" id="tickerTrack"></div>
       </div>
       </section>
 
-      <section class="gate" aria-labelledby="gateTitle">
-        <div class="gate-head">
-          <span class="eyebrow">Banker’s hours</span>
-          <h2 id="gateTitle">You can only trade it while the market is open.</h2>
-          <p>09:30–16:00 ET, Monday to Friday. Closed on NYSE holidays, 13:00 on half
-            days. Outside those hours every swap reverts with
-            <code>MarketClosed(nextOpen)</code> — a Uniswap v4 hook checks
-            <code>MarketCalendar.isMarketOpen()</code> before it will let a trade
-            through. Liquidity operations are never gated.</p>
-        </div>
-        <div class="gate-live">
-          <div class="gate-read">
-            <span class="eyebrow">Live read · Robinhood Chain</span>
-            <strong id="chainProofStatus">Reading chain…</strong>
-            <span class="gate-dot" id="chainProofDot" aria-hidden="true"></span>
-          </div>
-          <div class="gate-count">
-            <span class="eyebrow" id="countdownLabel">Next opening bell</span>
-            <strong id="marketClock">--:--:--</strong>
-            <span class="gate-sub">09:30–16:00 ET · 13:00 on half days</span>
-          </div>
-          <a class="gate-link" id="chainProofLink" href="#" target="_blank" rel="noreferrer">MarketCalendar on the explorer ↗</a>
-        </div>
-      </section>
+      <div class="paper">
+        <section class="paper-lede">
+          <h2>Three things, then you can go.</h2>
+          <ol class="paper-points">
+            <li><b>It is a memecoin.</b> Plain ERC-20. No tax, no owner, no transfer hooks.</li>
+            <li><b>It only trades 9:30–4, weekdays.</b> New York hours. Closed on NYSE holidays, 1:00 on half days.</li>
+            <li><b>The contract enforces it, not us.</b> Outside those hours a swap reverts on-chain. Nobody can turn that off.</li>
+          </ol>
+        </section>
 
-      <section class="facts" aria-label="Token facts">
-        <dl>
-          <div><dt>Supply</dt><dd>1,792,000,000</dd><dd class="fact-note">The NYSE was founded in 1792</dd></div>
-          <div><dt>Liquidity</dt><dd>All of it pooled</dd><dd class="fact-note">LP position locked permanently</dd></div>
-          <div><dt>Swap fee</dt><dd>1%</dd><dd class="fact-note">The team can collect fees and nothing else</dd></div>
-          <div><dt>Token</dt><dd>Plain ERC-20</dd><dd class="fact-note">No tax, no owner, no transfer hooks</dd></div>
-          <div><dt>Venue</dt><dd>Uniswap v4</dd><dd class="fact-note">Robinhood Chain · 4663</dd></div>
-          <div><dt>Calendar</dt><dd>On-chain</dd><dd class="fact-note">DST, holidays and half days, stored in the contract</dd></div>
-        </dl>
-      </section>
+        <section class="listing" aria-labelledby="listingTitle">
+          <div class="listing-head">
+            <div>
+              <span class="listing-sym" data-token-symbol>$TRADFI</span>
+              <h2 id="listingTitle">Holders of record</h2>
+            </div>
+            <div class="listing-meta">
+              <span><b data-stat="holders">—</b> holders</span>
+              <span><b data-stat="supply">—</b> shares outstanding</span>
+              <a id="listingLink" href="#" target="_blank" rel="noreferrer">Full register ↗</a>
+            </div>
+          </div>
+          <div class="listing-scroll">
+            <table class="listing-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="num">#</th>
+                  <th scope="col">Holder</th>
+                  <th scope="col" class="num">Position</th>
+                  <th scope="col" class="num">% outstanding</th>
+                </tr>
+              </thead>
+              <tbody id="holderRows">
+                <tr class="listing-empty"><td colspan="4">Reading the register…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="listing-note">Read live from the token contract on Robinhood Chain. Addresses marked
+            <span class="tag">contract</span> are pools and locks, not people.</p>
+        </section>
 
-      <section class="plaque">
-        <div class="plaque-info">
-          <span class="eyebrow">The exchange</span>
-          <p id="heroDescription">The exchange is shut.<br />The city isn’t.</p>
-        </div>
-      </section>
+        <section class="specs" aria-label="Contract details">
+          <dl>
+            <div><dt>Trading window</dt><dd>09:30–16:00 ET, Mon–Fri</dd></div>
+            <div><dt>Enforced by</dt><dd>Uniswap v4 hook</dd></div>
+            <div><dt>Reverts with</dt><dd><code>MarketClosed(nextOpen)</code></dd></div>
+            <div><dt>Calendar</dt><dd>On-chain — DST, holidays, half days</dd></div>
+            <div><dt>Supply</dt><dd>1,792,000,000 <span>the NYSE was founded in 1792</span></dd></div>
+            <div><dt>Liquidity</dt><dd>Pooled and locked permanently</dd></div>
+            <div><dt>Swap fee</dt><dd>1%</dd></div>
+            <div><dt>Network</dt><dd>Robinhood Chain · 4663</dd></div>
+          </dl>
+          <a class="specs-link" id="chainProofLink" href="#" target="_blank" rel="noreferrer">MarketCalendar on the explorer ↗</a>
+        </section>
+      </div>
 
       <aside class="person-card" id="personCard" aria-hidden="true" aria-live="polite">
         <button class="panel-close" id="closePerson" type="button" aria-label="Close person story">×</button>
@@ -191,7 +214,7 @@
       </aside>
 
       <footer class="footer-bar">
-        <span>Gated on Robinhood Chain · Uniswap v4</span>
+        <span data-token-name>TradFI</span>
         <span>Core hours 09:30–16:00 ET</span>
         <a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noreferrer">Explorer ↗</a>
       </footer>

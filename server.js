@@ -105,7 +105,10 @@ function getMarketStatus(now = new Date()) {
     easternDate: parts.dateKey,
     earlyClose: NYSE_EARLY_CLOSES.has(parts.dateKey),
     checkedAt: now.toISOString(),
-    nextOpenAt: isOpen ? null : findNextOpen(now)
+    nextOpenAt: isOpen ? null : findNextOpen(now),
+    // while the session is live the useful number is how long is left in it,
+    // not when it next opens -- the panel counts down to the closing bell
+    closesInSeconds: isOpen ? Math.round((closesAt - currentMinutes) * 60) : null
   };
 }
 
@@ -137,8 +140,90 @@ function getPublicConfig() {
       // browser can eth_call this contract with zero dependencies:
       isMarketOpenSelector: '0xd4ce85f3', // isMarketOpen()
       nextOpenSelector: '0x564be63f' // nextOpen(uint256)
-    }
+    },
+    // The page has two faces. Before the pool exists there is nothing to buy,
+    // so the hero sells the idea and the Trade button is a placeholder. The
+    // moment TOKEN_ADDRESS and TRADE_URL are both set the site flips itself
+    // over to the live face -- no redeploy of the front end, just env vars.
+    tradeable: Boolean(
+      (process.env.TOKEN_ADDRESS || '').trim() && (process.env.TRADE_URL || '').trim()
+    )
   };
+}
+
+/* ---- live token stats -----------------------------------------------------
+   Blockscout serves everything the page needs about the token itself --
+   holder count, holder list, market cap, 24h volume -- as plain GETs. We proxy
+   them rather than calling from the browser: it keeps connect-src at 'self',
+   avoids their CORS policy, and lets one cached fetch serve every visitor. */
+const EXPLORER_API = (process.env.EXPLORER_API_URL
+  || 'https://explorer.testnet.chain.robinhood.com').replace(/\/$/, '');
+const STATS_TOKEN = (process.env.STATS_TOKEN_ADDRESS
+  || process.env.TOKEN_ADDRESS
+  || '0x31200377343522bf566d3627768b9CcDb26bfFf4').trim();
+const STATS_TTL_MS = 60_000;
+let statsCache = { at: 0, value: null };
+
+async function fetchJson(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: controller.signal, headers: { accept: 'application/json' } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function toUnits(raw, decimals) {
+  if (raw == null) return null;
+  try {
+    const d = BigInt(decimals || 18);
+    const whole = BigInt(raw) / (10n ** d);
+    return Number(whole);
+  } catch { return null; }
+}
+
+async function getTokenStats() {
+  if (statsCache.value && Date.now() - statsCache.at < STATS_TTL_MS) return statsCache.value;
+
+  const base = `${EXPLORER_API}/api/v2/tokens/${STATS_TOKEN}`;
+  const [token, holders] = await Promise.all([fetchJson(base), fetchJson(`${base}/holders`)]);
+
+  const decimals = token && token.decimals ? Number(token.decimals) : 18;
+  const supply = token ? toUnits(token.total_supply, decimals) : null;
+
+  const list = (holders && Array.isArray(holders.items) ? holders.items : [])
+    .slice(0, 12)
+    .map((item, index) => {
+      const amount = toUnits(item.value, decimals);
+      return {
+        rank: index + 1,
+        address: (item.address && item.address.hash) || '',
+        isContract: Boolean(item.address && item.address.is_contract),
+        label: (item.address && item.address.name) || null,
+        amount,
+        share: supply && amount != null ? amount / supply : null
+      };
+    });
+
+  const value = {
+    symbol: (token && token.symbol) || 'TRADFI',
+    supply,
+    holders: token && token.holders_count != null ? Number(token.holders_count) : null,
+    marketCap: token && token.circulating_market_cap != null ? Number(token.circulating_market_cap) : null,
+    volume24h: token && token.volume_24h != null ? Number(token.volume_24h) : null,
+    price: token && token.exchange_rate != null ? Number(token.exchange_rate) : null,
+    topHolders: list,
+    explorerUrl: `${EXPLORER_API}/token/${STATS_TOKEN}`,
+    fetchedAt: new Date().toISOString(),
+    live: Boolean(token)
+  };
+  statsCache = { at: Date.now(), value };
+  return value;
 }
 
 function sendJson(response, statusCode, value) {
@@ -223,6 +308,12 @@ function createServer() {
       sendJson(response, 200, getPublicConfig());
       return;
     }
+    if (url.pathname === '/api/token-stats') {
+      getTokenStats()
+        .then((stats) => sendJson(response, 200, stats))
+        .catch(() => sendJson(response, 200, { live: false, topHolders: [] }));
+      return;
+    }
     serveStatic(url.pathname, response, request.headers);
   });
 }
@@ -233,4 +324,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createServer, easternParts, getMarketStatus, getPublicConfig };
+module.exports = { createServer, easternParts, getMarketStatus, getPublicConfig, getTokenStats };

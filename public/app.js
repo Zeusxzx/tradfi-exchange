@@ -19,11 +19,8 @@ const skyStatus = document.querySelector('#skyStatus');
 const skyTag = document.querySelector('#skyTag');
 const videoDay = document.querySelector('#videoDay');
 const videoNight = document.querySelector('#videoNight');
-const tickerMarket = document.querySelector('#tickerMarket');
-const tickerNext = document.querySelector('#tickerNext');
-const chainProofDot = document.querySelector('#chainProofDot');
-const chainProofStatus = document.querySelector('#chainProofStatus');
 const chainProofLink = document.querySelector('#chainProofLink');
+let closesAtEpoch = null;
 
 const people = {
   ivy: { number: 'EMPLOYEE 001', name: 'Ivy Mercado', role: 'Head trader · night DJ', open: 'Ivy moves between the center desk and the glass wall all day, reading the room faster than the screens. At the bell, she leaves the floor for a booth downtown.', closed: 'Ivy clocked out at the bell. She is across town turning the closing candles into the first track of the night.', openLocation: 'THIRD FLOOR · EQUITIES', closedLocation: 'OFF DUTY · LOWER EAST SIDE' },
@@ -199,6 +196,10 @@ function sceneLoop(host) {
 
   return {
     play() { tryPlay(live); },
+    // A fully transparent scene is still decoded frame for frame unless it is
+    // told to stop. Two scenes x two loop layers is four decoders for one
+    // visible picture; parking the hidden one halves the work.
+    pause() { layers.forEach((v) => { if (!v.paused) v.pause(); }); },
     set preload(value) { layers.forEach((v) => { v.preload = value; }); }
   };
 }
@@ -210,10 +211,8 @@ function syncVideoPlayback() {
   const mix = getNightMix();
   const wantDay = mix < 1;
   const wantNight = mix > 0;
-  sceneDay.preload = wantDay ? 'auto' : 'metadata';
-  sceneNight.preload = wantNight ? 'auto' : 'metadata';
-  if (wantDay) sceneDay.play();
-  if (wantNight) sceneNight.play();
+  if (wantDay) sceneDay.play(); else sceneDay.pause();
+  if (wantNight) sceneNight.play(); else sceneNight.pause();
 }
 
 // Browsers (esp. two competing autoplay <video> elements) can silently drop
@@ -225,6 +224,8 @@ setInterval(() => {
   const mix = getNightMix();
   if (mix < 1) sceneDay.play();
   if (mix > 0) sceneNight.play();
+  if (mix >= 1) sceneDay.pause();
+  if (mix <= 0) sceneNight.pause();
 }, 4000);
 
 function renderView() {
@@ -240,11 +241,7 @@ function renderView() {
   if (viewLabel) viewLabel.textContent = activeView === 'live'
     ? 'Live'
     : `Previewing ${state === 'open' ? 'market-open' : 'after-hours'}`;
-  document.querySelector('#heroLineOne').textContent = state === 'open' ? 'ON THE' : 'OFF THE';
-  document.querySelector('#heroLineTwo').textContent = state === 'open' ? 'FLOOR.' : 'CLOCK.';
-  document.querySelector('#heroDescription').innerHTML = state === 'open'
-    ? 'The bell has rung.<br />Swaps clear until four.'
-    : 'The exchange is shut.<br />The city isn’t.';
+  renderHud(state);
   renderSystems();
   syncVideoPlayback();
   closePersonCard();
@@ -260,12 +257,20 @@ function updateClock() {
     renderSystems();
   }
   if (!marketStatus) return;
+  const hudTime = document.querySelector('#hudTime');
+  let total;
   if (marketStatus.isOpen) {
-    document.querySelector('#marketClock').textContent = 'OPEN NOW';
-    return;
+    // counts down to the closing bell; the server hands us the session
+    // remainder once and we tick it locally so the RPC is not polled per second
+    if (closesAtEpoch == null && marketStatus.closesInSeconds != null) {
+      closesAtEpoch = Date.now() + marketStatus.closesInSeconds * 1000;
+    }
+    total = closesAtEpoch == null ? 0 : Math.max(0, Math.floor((closesAtEpoch - now.getTime()) / 1000));
+  } else {
+    closesAtEpoch = null;
+    const next = marketStatus.nextOpenAt ? new Date(marketStatus.nextOpenAt).getTime() : 0;
+    total = Math.max(0, Math.floor((next - now.getTime()) / 1000));
   }
-  const next = marketStatus.nextOpenAt ? new Date(marketStatus.nextOpenAt).getTime() : 0;
-  const total = Math.max(0, Math.floor((next - now.getTime()) / 1000));
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
   const minutes = Math.floor((total % 3600) / 60);
@@ -273,8 +278,7 @@ function updateClock() {
   const label = days
     ? `${days}D ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
     : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  document.querySelector('#marketClock').textContent = label;
-  if (tickerNext) tickerNext.textContent = `NEXT OPEN ${label}`;
+  if (hudTime) hudTime.textContent = label;
 }
 
 function updateTrade() {
@@ -296,7 +300,6 @@ function renderMarket() {
   experience.dataset.market = marketStatus.state;
   document.querySelector('#marketStateLabel').textContent = marketStatus.isOpen ? 'Market open' : 'Market closed';
   document.querySelector('#marketReason').textContent = `${marketStatus.reason} · ${marketStatus.coreHours}`;
-  if (tickerMarket) tickerMarket.textContent = `ON-CHAIN: MARKET ${marketStatus.isOpen ? 'OPEN' : 'CLOSED'}`;
   renderView();
   updateTrade();
   updateClock();
@@ -325,18 +328,12 @@ async function verifyOnChain() {
     const nowHex = '0x' + Math.floor(Date.now() / 1000).toString(16);
     const nextResult = await rpcCall(rpcUrl, address, nextOpenSelector + padHex32(nowHex));
     const nextOpenEpoch = Number(BigInt(nextResult));
-    chainProofDot.classList.toggle('open', isOpenOnChain);
-    chainProofStatus.textContent = isOpenOnChain
-      ? `VERIFIED OPEN · ${network.toUpperCase()}`
-      : `VERIFIED CLOSED · ${network.toUpperCase()}`;
+    void nextOpenEpoch; void isOpenOnChain;
     if (chainProofLink) chainProofLink.href = `https://robinhoodchain.blockscout.com/address/${address}`;
-    if (!isOpenOnChain && nextOpenEpoch) {
-      const mins = Math.max(0, Math.round((nextOpenEpoch * 1000 - Date.now()) / 60000));
-      chainProofStatus.textContent += ` · opens in ~${mins}m`;
-    }
+    void network;
   } catch (error) {
-    chainProofStatus.textContent = 'Chain read failed — retrying';
-    chainProofDot.classList.remove('open');
+    /* the chain read is corroboration, not the source of what the page shows;
+       if it fails the server's own calendar still drives everything */
   }
 }
 
@@ -413,6 +410,8 @@ const openStoryBtn = document.querySelector('#openStory');
 if (openStoryBtn) openStoryBtn.addEventListener('click', () => openPersonCard(visibleState() === 'open' ? 'ivy' : 'mo'));
 document.querySelector('#closePerson').addEventListener('click', closePersonCard);
 document.querySelector('#openTrade').addEventListener('click', () => setTradeDrawer(true));
+const heroTrade = document.querySelector('#heroTrade');
+if (heroTrade) heroTrade.addEventListener('click', () => setTradeDrawer(true));
 document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
 drawerScrim.addEventListener('click', () => setTradeDrawer(false));
 walletButton.addEventListener('click', connectWallet);
@@ -453,15 +452,101 @@ requestAnimationFrame(() => requestAnimationFrame(() => experience.classList.add
 renderView();
 updateClock();
 
+/* ---- the two panels, and the register below them -------------------------
+   Everything the hero says now lives in exactly two places: the countdown on
+   the left and the pitch on the right. The numbers under the countdown come
+   from the token contract; the ones that need a price stay as dashes until
+   there is one, rather than disappearing and shifting the layout later. */
+function renderHud(state) {
+  // The preview toggle repaints the building, not the facts. This panel is
+  // the one thing on the page that must always be true, so it reads the real
+  // market state even while you are previewing the other one.
+  const open = marketStatus ? marketStatus.isOpen : state === 'open';
+  const label = document.querySelector('[data-clock-label]');
+  const sub = document.querySelector('#hudSub');
+  if (label) label.textContent = open ? 'Closes in' : 'Opens in';
+  if (sub) sub.textContent = marketStatus ? marketStatus.coreHours : '9:30 AM – 4:00 PM ET';
+
+  const cta = document.querySelector('#heroTrade');
+  const ctaLabel = document.querySelector('#heroTradeLabel');
+  const foot = document.querySelector('#heroTradeFoot');
+  if (!cta) return;
+  const tradeable = Boolean(publicConfig && publicConfig.tradeable);
+  const locked = !tradeable || !open;
+  cta.dataset.locked = String(locked);
+  if (ctaLabel) {
+    ctaLabel.textContent = !tradeable ? 'Not live yet'
+      : open ? `Trade ${publicConfig.tokenSymbol ? '$' + publicConfig.tokenSymbol : ''}`.trim()
+      : 'Closed until the bell';
+  }
+  if (foot) {
+    foot.textContent = !tradeable ? 'Pool launches on Robinhood Chain'
+      : open ? 'Robinhood Chain · Uniswap v4'
+      : 'Swaps revert on-chain outside market hours';
+  }
+}
+
+const fmtUsd = (n) => n == null ? '—' : (
+  n >= 1e9 ? '$' + (n / 1e9).toFixed(2) + 'B' :
+  n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' :
+  n >= 1e3 ? '$' + (n / 1e3).toFixed(1) + 'K' : '$' + n.toFixed(2)
+);
+const fmtNum = (n) => n == null ? '—' : n.toLocaleString('en-US');
+const shortAddr = (a) => a ? a.slice(0, 6) + '…' + a.slice(-4) : '—';
+
+async function loadTokenStats() {
+  let stats;
+  try {
+    const res = await fetch('/api/token-stats', { cache: 'no-store' });
+    if (!res.ok) return;
+    stats = await res.json();
+  } catch { return; }
+  if (!stats) return;
+
+  const map = {
+    marketCap: fmtUsd(stats.marketCap),
+    volume24h: fmtUsd(stats.volume24h),
+    holders: fmtNum(stats.holders),
+    supply: fmtNum(stats.supply)
+  };
+  document.querySelectorAll('[data-stat]').forEach((node) => {
+    const key = node.getAttribute('data-stat');
+    if (key in map) node.textContent = map[key];
+  });
+
+  const link = document.querySelector('#listingLink');
+  if (link && stats.explorerUrl) link.href = stats.explorerUrl;
+
+  const body = document.querySelector('#holderRows');
+  if (!body) return;
+  const rows = stats.topHolders || [];
+  if (!rows.length) {
+    body.innerHTML = '<tr class="listing-empty"><td colspan="4">No holders on record yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map((h) => {
+    const pct = h.share == null ? '—' : (h.share * 100).toFixed(h.share < 0.0001 ? 4 : 2) + '%';
+    const width = h.share == null ? 0 : Math.max(1, Math.round(h.share * 100));
+    return `<tr>
+      <td class="num rank">${h.rank}</td>
+      <td class="addr">${h.label ? h.label : shortAddr(h.address)}${h.isContract ? '<span class="tag">contract</span>' : ''}</td>
+      <td class="num">${fmtNum(h.amount)}</td>
+      <td class="num">${pct}<span class="barwrap"><span class="bar" data-w="${width}"></span></span></td>
+    </tr>`;
+  }).join('');
+  // widths are set through the CSSOM, not a style="" attribute: our CSP is
+  // style-src 'self', which blocks inline style attributes outright
+  body.querySelectorAll('.bar').forEach((bar) => {
+    bar.style.width = bar.getAttribute('data-w') + '%';
+  });
+}
+
 setInterval(updateClock, 1000);
 setInterval(loadRuntime, 60000);
 setInterval(verifyOnChain, 45000);
-/* keep the gate's open/shut dot in step with the live read */
-setInterval(() => {
-  const dot = document.querySelector('#chainProofDot');
-  if (dot) dot.classList.toggle('is-open', !!(marketStatus && marketStatus.isOpen));
-}, 1000);
+setInterval(loadTokenStats, 90000);
 loadRuntime();
+loadTokenStats();
 schedulePlane();
 
 
@@ -474,7 +559,9 @@ schedulePlane();
 (function heroOverlay() {
   const stage  = document.querySelector('#building');
   const space  = document.querySelector('#videoSpace');
-  const tracks = [...document.querySelectorAll('[data-board-track]')];
+  // the board on the building and the strip along the bottom say the same
+  // thing, because there is only one thing worth saying at any moment
+  const tracks = [...document.querySelectorAll('[data-board-track]'), ...document.querySelectorAll('#tickerTrack')];
   const spots  = document.querySelector('.person-hotspots');
   if (!stage || !space) return;
 
@@ -517,15 +604,16 @@ schedulePlane();
      snap back. Structure is stable; only the clock digits move. */
   let builtFor = null;
 
+  /* Open: it is trading, it is on chain, here is the ticker, here is the time.
+     Closed: here is when it opens, here is the ticker. Supply, pool fee and LP
+     copy all moved to the paper section -- a strip nobody can pause is the
+     worst place to put a fact somebody might want to read twice. */
   function cellsFor(open) {
     const sym = read('[data-token-symbol]', '$TRADFI');
     return open
-      ? [['', 'MARKET OPEN', 'state'], ['TRADING', 'LIVE ON-CHAIN', 'gate'],
-         [sym, '', 'price'], ['24H', '', 'chg'],
-         ['NEW YORK', '', 'clock'], ['SUPPLY', '1,792,000,000', null], ['POOL FEE', '1%', null]]
-      : [['', 'MARKET CLOSED', 'state'], ['NEXT OPEN', '', 'next'],
-         [sym, '', 'price'], ['24H', '', 'chg'],
-         ['NEW YORK', '', 'clock'], ['SUPPLY', '1,792,000,000', null], ['POOL FEE', '1%', null]];
+      ? [['', 'TRADING', 'state'], ['', 'LIVE ON-CHAIN', null],
+         ['', sym, null], ['NEW YORK', '', 'clock']]
+      : [['NEXT OPEN', '', 'next'], ['', sym, null]];
   }
 
   function build(open) {
@@ -538,13 +626,10 @@ schedulePlane();
     if (typeof window.__marqueeRig === 'function') window.__marqueeRig();
   }
 
-  function values(open) {
-    const chg = tokenChange();
+  function values() {
     return {
-      price: tokenPrice(),
-      chg: chg ? chg.text : '—',
       clock: read('#newYorkTime', '--:--:-- ET'),
-      next: read('#marketClock', '--:--:--')
+      next: read('#hudTime', '--:--:--')
     };
   }
 
@@ -552,13 +637,11 @@ schedulePlane();
     if (!tracks.length) return;
     const open = (typeof visibleState === 'function') ? visibleState() === 'open' : false;
     if (builtFor !== (open ? 'open' : 'closed')) build(open);
-    const v = values(open);
-    const chg = tokenChange();
-    document.querySelectorAll('[data-board-track] [data-v]').forEach((n) => {
+    const v = values();
+    tracks.forEach((t) => t.querySelectorAll('[data-v]').forEach((n) => {
       const k = n.getAttribute('data-v');
       if (k in v && n.textContent !== v[k]) n.textContent = v[k];
-      if (k === 'chg') n.className = chg ? (chg.up ? 'up' : 'dn') : '';
-    });
+    }));
   }
 
   sizeSpace();
@@ -577,8 +660,8 @@ schedulePlane();
    repeated until it fills the container, and travel exactly one unit. */
 (function marquees() {
   const RIGS = [
-    { track: '#tickerTrack',    unit: 'ticker-unit', pxPerSec: 95, min: 14 },
-    { track: '[data-board-track]', unit: 'board-unit',  pxPerSec: 115, min: 10 }
+    { track: '#tickerTrack',    unit: 'board-unit', pxPerSec: 95, min: 14 },
+    { track: '[data-board-track]', unit: 'board-unit', pxPerSec: 115, min: 10 }
   ];
 
   function rebuild(track, unitClass, pxPerSec, min) {

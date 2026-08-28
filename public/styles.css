@@ -176,13 +176,6 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 }
 .grain { opacity: .04; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
-.frame-title {
-  position: absolute; left: 20px; top: 18px; z-index: 6; margin: 0;
-  font-family: var(--display); font-size: 15px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
-  color: var(--paper); text-shadow: 0 2px 10px rgba(0,0,0,.5);
-  padding: 7px 14px; border: 1px solid rgba(242,243,244,.28); border-radius: 4px;
-  background: rgba(5,7,10,.34); backdrop-filter: blur(14px);
-}
 
 .corner-tag.sky-tag {
   position: absolute; right: 18px; top: 18px; z-index: 6; display: flex; align-items: center; gap: 6px;
@@ -324,8 +317,7 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
   .status-line { padding: 0 14px 12px; font-size: 8px; }
   .city-frame { padding: 0 12px; }
   .frame-inner { height: auto; min-height: 0; border-radius: 20px; }
-  .frame-title { font-size: 12px; padding: 6px 12px; }
-  .gauge-card { position: static; width: auto; margin: 0; border-radius: 14px; }
+    .gauge-card { position: static; width: auto; margin: 0; border-radius: 14px; }
   .frame-inner > .gauge-card { position: absolute; bottom: 10px; width: min(132px, 42vw); padding: 9px 10px; }
   .gauge-traffic { left: 10px; } .gauge-subway { right: 10px; }
   .chain-proof { margin: 18px 12px 0; flex-direction: column; align-items: flex-start; }
@@ -388,13 +380,7 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 .stage .ticker-track { padding-block: 11px; }
 
 /* the hero headline sits over the image, bottom-left, clear of the strip */
-.stage .frame-title {
-  left: clamp(16px, 3vw, 44px); right: auto;
-  top: auto; bottom: 70px; z-index: 21;
-  width: max-content; max-width: none; white-space: nowrap;
-  font-size: clamp(15px, 1.5vw, 22px);
-}
-/* the sky chip would sit under Connect/Trade at the top right, so it moves
+.stage /* the sky chip would sit under Connect/Trade at the top right, so it moves
    down to the opposite corner from the headline */
 .stage .corner-tag.sky-tag {
   top: auto; right: clamp(16px, 3vw, 44px); bottom: 70px; z-index: 21;
@@ -402,8 +388,7 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 
 @media (max-width: 720px) {
   .stage { height: 100dvh; min-height: 420px; }
-  .stage .frame-title { bottom: 56px; font-size: 13px; padding: 5px 11px; }
-  .stage .corner-tag.sky-tag { bottom: 56px; }
+  .stage   .stage .corner-tag.sky-tag { bottom: 56px; }
 }
 
 .board-track b { font-weight: 600; }
@@ -496,13 +481,7 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 @media (max-width: 560px) { .facts dl { grid-template-columns: 1fr; } }
 
 /* the hero headline: a plain rule, not a pill */
-.stage .frame-title {
-  padding: 0; border: 0; border-left: 2px solid var(--paper); border-radius: 0;
-  padding-left: 14px; background: none; backdrop-filter: none;
-  font-family: var(--display); font-weight: 700; letter-spacing: .02em;
-  font-size: clamp(20px, 2.1vw, 30px); text-transform: uppercase;
-}
-.wordmark-sub { font-family: var(--data); font-size: 9.5px; letter-spacing: .11em; color: var(--muted); }
+.stage .wordmark-sub { font-family: var(--data); font-size: 9.5px; letter-spacing: .11em; color: var(--muted); }
 
 
 /* Preview toggle — cycles Live → Market open → After hours. Lets the open
@@ -520,3 +499,214 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 .state-toggle[data-state="closed"] .state-dot { background: var(--down); box-shadow: 0 0 10px currentColor; }
 .state-toggle[data-state="live"]   .state-dot { background: var(--paper); }
 @media (max-width: 720px) { .state-toggle span:last-child { display: none; } .state-toggle { padding: 0 12px; } }
+
+
+/* ==========================================================================
+   HUD — the two panels over the building.
+   Left is the number that matters. Right is the entire pitch. Nothing else
+   sits on the hero, because everything else can wait until they scroll.
+   ========================================================================== */
+.hud {
+  position: absolute; z-index: 14; left: 0; right: 0; bottom: clamp(56px, 7vh, 92px);
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 24px;
+  padding: 0 clamp(18px, 4vw, 64px); pointer-events: none;
+}
+.hud > * { pointer-events: auto; }
+
+/* the glass both panels are cut from */
+.hud-clock, .hud-card {
+  border-radius: 20px;
+  background: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.05) 46%, rgba(255,255,255,.03));
+  backdrop-filter: blur(26px) saturate(165%);
+  -webkit-backdrop-filter: blur(26px) saturate(165%);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(255,255,255,.06);
+  color: var(--paper);
+}
+
+.hud-clock { padding: 20px 24px 18px; min-width: min(330px, 44vw); }
+.hud-label {
+  display: block; font-family: var(--data); font-size: 10px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.62);
+}
+.hud-time {
+  display: block; margin: 6px 0 2px; font-family: var(--data); font-weight: 500;
+  font-size: clamp(34px, 4.4vw, 58px); line-height: 1; letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums; color: #fff;
+  text-shadow: 0 2px 18px rgba(0,0,0,.45);
+}
+.hud-sub { display: block; font-size: 12px; color: rgba(255,255,255,.62); }
+.hud-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 16px 0 0;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 11px; overflow: hidden;
+}
+.hud-stats > div { padding: 9px 12px; background: rgba(10,14,20,.30); }
+.hud-stats dt {
+  font-family: var(--data); font-size: 9px; letter-spacing: .13em;
+  text-transform: uppercase; color: rgba(255,255,255,.55);
+}
+.hud-stats dd {
+  margin: 3px 0 0; font-family: var(--data); font-size: 15px; font-weight: 500;
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: #fff;
+}
+
+.hud-card { padding: 22px 24px 20px; width: min(370px, 46vw); }
+.hud-title {
+  margin: 8px 0 10px; font-family: var(--display); font-weight: 700;
+  font-size: clamp(26px, 2.5vw, 38px); line-height: .96; letter-spacing: .005em;
+  text-transform: uppercase; color: #fff;
+}
+.hud-copy { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.80); }
+.hud-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 12px 18px; border: 0; border-radius: 12px; cursor: pointer;
+  background: #fff; color: #0a0d12;
+  font-family: var(--ui); font-size: 15px; font-weight: 600; letter-spacing: .01em;
+  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+  box-shadow: 0 8px 22px rgba(0,0,0,.32);
+}
+.hud-cta:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(0,0,0,.4); }
+.hud-cta[data-locked="true"] { background: rgba(255,255,255,.14); color: rgba(255,255,255,.72); box-shadow: none; }
+.hud-foot {
+  display: block; margin-top: 10px; text-align: center;
+  font-family: var(--data); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: rgba(255,255,255,.48);
+}
+
+@media (max-width: 900px) {
+  .hud { flex-direction: column; align-items: stretch; bottom: clamp(48px, 6vh, 70px); gap: 12px; }
+  .hud-clock, .hud-card { width: auto; min-width: 0; }
+  .hud-card { order: -1; }
+  .hud-title { font-size: 24px; }
+  .hud-time { font-size: 40px; }
+}
+
+/* ==========================================================================
+   PAPER — everything below the building. The film ends, the filing begins.
+   ========================================================================== */
+.paper { position: relative; z-index: 4; background: #f7f7f5; color: #14161a; }
+.paper section { max-width: 1100px; margin-inline: auto; padding: clamp(46px, 7vw, 86px) clamp(20px, 5vw, 48px); }
+.paper section + section { border-top: 1px solid #e2e2dd; }
+
+.paper-lede h2 {
+  margin: 0 0 22px; font-family: var(--display); font-weight: 700;
+  font-size: clamp(30px, 4vw, 48px); line-height: .98; letter-spacing: .005em;
+  text-transform: uppercase; color: #0d0f13;
+}
+.paper-points { margin: 0; padding: 0; list-style: none; counter-reset: pt; display: grid; gap: 14px; }
+.paper-points li {
+  counter-increment: pt; position: relative; padding-left: 40px;
+  font-size: 16px; line-height: 1.55; color: #3a3f47; max-width: 62ch;
+}
+.paper-points li::before {
+  content: counter(pt); position: absolute; left: 0; top: 1px;
+  width: 25px; height: 25px; border-radius: 50%; display: grid; place-items: center;
+  background: #14161a; color: #fff; font-family: var(--data); font-size: 12px; font-weight: 500;
+}
+.paper-points b { color: #0d0f13; font-weight: 600; }
+
+/* the register, laid out like an exchange listing */
+.listing-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 20px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.listing-sym {
+  display: block; font-family: var(--data); font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; color: #6b7280;
+}
+.listing-head h2 {
+  margin: 5px 0 0; font-family: var(--display); font-weight: 700;
+  font-size: clamp(26px, 3vw, 36px); line-height: 1; text-transform: uppercase; color: #0d0f13;
+}
+.listing-meta { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; font-size: 13px; color: #6b7280; }
+.listing-meta b { font-family: var(--data); font-weight: 500; color: #0d0f13; font-variant-numeric: tabular-nums; }
+.listing-meta a { color: #0d0f13; text-decoration: none; border-bottom: 1px solid #c9c9c2; }
+.listing-meta a:hover { border-bottom-color: #0d0f13; }
+
+.listing-scroll { overflow-x: auto; border: 1px solid #e2e2dd; border-radius: 10px; background: #fff; }
+.listing-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+.listing-table th {
+  text-align: left; padding: 11px 16px; background: #f0f0ec;
+  border-bottom: 1px solid #e2e2dd;
+  font-family: var(--data); font-size: 10px; font-weight: 500;
+  letter-spacing: .13em; text-transform: uppercase; color: #6b7280;
+}
+.listing-table td { padding: 13px 16px; border-bottom: 1px solid #efefea; color: #22262c; }
+.listing-table tr:last-child td { border-bottom: 0; }
+.listing-table tbody tr:nth-child(even) td { background: #fbfbf9; }
+.listing-table .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--data); }
+.listing-table td.addr { font-family: var(--data); font-size: 13px; letter-spacing: -.01em; }
+.listing-table .rank { color: #9aa0a8; width: 44px; }
+.listing-empty td { text-align: center; color: #9aa0a8; padding: 26px; }
+.tag {
+  display: inline-block; margin-left: 7px; padding: 1px 6px; border-radius: 4px;
+  background: #e9ebf0; color: #5a6371;
+  font-family: var(--data); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+}
+.bar { display: block; height: 3px; margin-top: 5px; border-radius: 2px; background: #14161a; min-width: 2px; }
+.listing-note { margin: 14px 0 0; font-size: 12px; color: #8a9099; }
+
+.specs dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; margin: 0; background: #e2e2dd; border: 1px solid #e2e2dd; border-radius: 10px; overflow: hidden; }
+.specs dl > div { background: #fff; padding: 15px 18px; }
+.specs dt { font-family: var(--data); font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #6b7280; }
+.specs dd { margin: 6px 0 0; font-size: 15px; color: #14161a; }
+.specs dd span { display: block; margin-top: 3px; font-size: 12px; color: #8a9099; }
+.specs dd code { background: #f0f0ec; color: #14161a; }
+.specs-link { display: inline-block; margin-top: 20px; font-size: 14px; color: #0d0f13; text-decoration: none; border-bottom: 1px solid #c9c9c2; }
+.specs-link:hover { border-bottom-color: #0d0f13; }
+
+.paper ~ .footer-bar, .footer-bar {
+  background: #f0f0ec; color: #6b7280; border-top: 1px solid #e2e2dd;
+}
+.footer-bar a { color: #0d0f13; }
+
+
+/* ---- corrections after the first render pass ---- */
+
+/* the share bar was running the width of the cell and reading as a rule.
+   Give it a fixed track so 100% and 0.0001% are the same object at
+   different lengths, which is the only reason to draw it at all. */
+.listing-table td.num .barwrap {
+  display: block; width: 72px; height: 3px; margin: 6px 0 0 auto;
+  border-radius: 2px; background: #e6e6e0; overflow: hidden;
+}
+.bar { display: block; height: 100%; margin: 0; border-radius: 2px; background: #14161a; min-width: 1px; }
+
+/* the footer belongs to the paper, not to the film */
+.footer-bar {
+  max-width: none; margin: 0; padding: 18px clamp(20px, 5vw, 48px);
+  border-top: 1px solid #e2e2dd; background: #f0f0ec; color: #8a9099;
+  font: 500 10px var(--data); letter-spacing: .12em;
+}
+.footer-bar > * { max-width: 1100px; }
+.footer-bar a { color: #0d0f13; text-decoration: none; }
+/* and nothing dark peeks out behind it */
+body { background: #f7f7f5; }
+.experience { background: transparent; }
+
+/* the hero strip carries the same two or four items as the board, so it needs
+   room to breathe rather than the tight board spacing */
+.ticker-tape {
+  border-block: 0; border-top: 1px solid rgba(242,243,244,.14);
+  background: linear-gradient(180deg, rgba(3,5,8,0), rgba(3,5,8,.9) 45%);
+  margin: 0;
+}
+#tickerTrack {
+  font-family: var(--display); font-weight: 600; font-size: 13px;
+  letter-spacing: .1em; color: rgba(242,243,244,.82);
+}
+#tickerTrack .board-unit { gap: 54px; padding-right: 54px; }
+#tickerTrack em { font-style: normal; color: rgba(242,243,244,.45); margin-right: .45em; }
+#tickerTrack i { width: 3px; height: 3px; border-radius: 50%; background: rgba(242,243,244,.3); }
+
+/* Cheaper glass. backdrop-filter re-samples the moving video underneath on
+   every frame, and saturate() is a second pass over the same pixels. Half the
+   radius and no saturate reads the same at this size and costs far less. */
+.hud-clock, .hud-card {
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+}

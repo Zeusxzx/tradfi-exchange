@@ -6,6 +6,9 @@
     <meta name="theme-color" content="#05070a" />
     <meta name="description" content="TradFI — a memecoin on New York Stock Exchange hours. Trades are only possible while the NYSE is open, enforced on-chain, not by a website." />
     <title>TradFI — a memecoin on New York Stock Exchange hours</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="/assets/favicon-32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
     <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/khand-700-latin.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/hind-400-latin.woff2" crossorigin />
     <link href="/assets/fonts.css" rel="stylesheet" />
@@ -19,6 +22,7 @@
 
       <header class="masthead">
         <a class="wordmark" href="#building" aria-label="TradFI home">
+          <img class="wordmark-mark" src="/assets/logo-mark.png" alt="" width="512" height="512" />
           <span class="wordmark-main" data-token-name>TradFI</span>
           <span class="wordmark-sub">a memecoin on New York Stock Exchange hours</span>
         </a>
@@ -82,6 +86,7 @@
           <div class="grain" aria-hidden="true"></div>
 
 
+          <img class="mascot mascot-hero" src="/assets/logo-full.png" alt="" aria-hidden="true" />
           <div class="hud">
             <!-- left: the number that matters, and the four that back it up -->
             <section class="hud-clock" aria-labelledby="hudClockLabel">
@@ -138,6 +143,42 @@
                 <p>Try to buy at 4:01 and the chain turns you down. Come back when the bell rings.</p></div>
             </li>
           </ol>
+          <img class="mascot mascot-rail" src="/assets/logo-full.png" alt="" aria-hidden="true" />
+        </section>
+
+        <section class="quote-section" aria-labelledby="quoteTitle">
+          <div class="quote" id="quote" data-state="closed">
+            <div class="quote-head">
+              <div>
+                <span class="quote-sym" data-token-symbol>$TRADFI</span>
+                <span class="quote-venue">Robinhood Chain · Uniswap v4</span>
+              </div>
+              <span class="head-right"><span class="sample-chip">Sample</span><span class="quote-status" id="quoteStatus"><i></i><span>Closed</span></span></span>
+            </div>
+            <div class="quote-price">
+              <strong id="quoteLast">—</strong>
+              <span class="quote-change" id="quoteChange">—</span>
+            </div>
+            <p class="quote-frozen" id="quoteFrozen" hidden></p>
+            <dl class="quote-stats">
+              <div><dt>Open</dt><dd id="qOpen">—</dd></div>
+              <div><dt>High</dt><dd id="qHigh">—</dd></div>
+              <div><dt>Low</dt><dd id="qLow">—</dd></div>
+              <div><dt>Prev close</dt><dd id="qPrev">—</dd></div>
+              <div><dt>Volume</dt><dd id="qVol">—</dd></div>
+              <div><dt>Trades</dt><dd id="qCount">—</dd></div>
+            </dl>
+          </div>
+
+          <aside class="account" id="account">
+            <div class="account-head">
+              <span class="section-eyebrow">Your account</span>
+              <button class="account-connect" id="accountConnect" type="button">Connect wallet</button>
+            </div>
+            <div class="account-body" id="accountBody">
+              <p class="account-empty">Connect to see your position.</p>
+            </div>
+          </aside>
         </section>
 
         <section class="floor">
@@ -177,6 +218,7 @@
         </section>
 
         <section class="records">
+          <img class="mascot mascot-records" src="/assets/logo-full.png" alt="" aria-hidden="true" />
           <div class="section-head">
             <div>
               <span class="section-eyebrow" data-token-symbol>$TRADFI</span>

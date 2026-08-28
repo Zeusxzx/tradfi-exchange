@@ -2,6 +2,8 @@ const http = require('node:http');
 const path = require('node:path');
 const fs = require('node:fs');
 
+const swaps = require('./swaps');
+
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORT = Number(process.env.PORT || 3000);
 const NYSE_TIME_ZONE = 'America/New_York';
@@ -109,6 +111,28 @@ function getMarketStatus(now = new Date()) {
     // while the session is live the useful number is how long is left in it,
     // not when it next opens -- the panel counts down to the closing bell
     closesInSeconds: isOpen ? Math.round((closesAt - currentMinutes) * 60) : null
+  };
+}
+
+/* The epoch millisecond of today's opening bell in New York, which is where
+   a session's open/high/low/volume starts counting from. */
+function sessionStartMs(now = new Date()) {
+  const parts = easternParts(now);
+  const minutesNow = parts.hour * 60 + parts.minute + parts.second / 60;
+  const opensAt = 9 * 60 + 30;
+  return now.getTime() - (minutesNow - opensAt) * 60000;
+}
+
+function getQuote() {
+  const status = getMarketStatus();
+  const q = swaps.quote(sessionStartMs());
+  return {
+    ...q,
+    symbol: (process.env.TOKEN_SYMBOL || 'TRADFI'),
+    isOpen: status.isOpen,
+    sessionLabel: status.isOpen ? 'Open' : status.reason,
+    coreHours: status.coreHours,
+    prints: swaps.tape(40)
   };
 }
 
@@ -311,6 +335,10 @@ function createServer() {
       sendJson(response, 200, getPublicConfig());
       return;
     }
+    if (url.pathname === '/api/quote') {
+      sendJson(response, 200, getQuote());
+      return;
+    }
     if (url.pathname === '/api/token-stats') {
       getTokenStats()
         .then((stats) => sendJson(response, 200, stats))
@@ -322,9 +350,10 @@ function createServer() {
 }
 
 if (require.main === module) {
+  swaps.start();
   createServer().listen(PORT, '0.0.0.0', () => {
     console.log(`Exchange Building listening on port ${PORT}`);
   });
 }
 
-module.exports = { createServer, easternParts, getMarketStatus, getPublicConfig, getTokenStats };
+module.exports = { createServer, easternParts, getMarketStatus, getPublicConfig, getTokenStats, getQuote, sessionStartMs };

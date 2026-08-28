@@ -1122,3 +1122,92 @@ html, body { background: var(--pw); }
 .tape-rows::-webkit-scrollbar-thumb:hover, .book-rows::-webkit-scrollbar-thumb:hover { background: var(--pw-dim); }
 /* the column header stays put while the rows move under it */
 .tape-cols, .book-cols { position: sticky; top: 0; z-index: 2; }
+
+
+/* ---- the guy ------------------------------------------------------------- */
+.wordmark { display: flex; align-items: center; gap: 10px; }
+.wordmark-mark { width: 34px; height: 34px; object-fit: contain; object-position: center top; flex: 0 0 auto; }
+
+.mascot { position: absolute; pointer-events: none; user-select: none; height: auto; }
+/* in the hero he stands at the right edge, behind the glass, cropped by the floor */
+.mascot-hero {
+  right: clamp(-30px, 1vw, 40px); bottom: 0; z-index: 12;
+  width: clamp(150px, 15vw, 260px); opacity: .92;
+  filter: drop-shadow(0 18px 40px rgba(0,0,0,.55));
+}
+@media (max-width: 900px) { .mascot-hero { display: none; } }
+/* downstairs he stands beside things, at the right margin */
+.pitch, .records { position: relative; }
+.mascot-rail, .mascot-records {
+  right: clamp(-10px, 1vw, 24px); bottom: 0;
+  width: clamp(110px, 11vw, 190px); opacity: .95;
+}
+.mascot-records { bottom: auto; top: 8px; }
+@media (max-width: 1080px) { .mascot-rail, .mascot-records { display: none; } }
+
+/* ---- the quote block ----------------------------------------------------- */
+.quote-section {
+  display: grid; grid-template-columns: 1.55fr 1fr;
+  gap: clamp(18px, 2.4vw, 36px); align-items: start;
+  max-width: 1500px !important;
+}
+@media (max-width: 940px) { .quote-section { grid-template-columns: 1fr; } }
+
+.quote, .account {
+  border: 1px solid var(--pw-line); border-radius: 14px;
+  background: var(--pw-2); padding: clamp(18px, 2.2vw, 28px);
+}
+.quote-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.quote-sym {
+  display: block; font-family: var(--display); font-weight: 700;
+  font-size: clamp(22px, 2.2vw, 30px); text-transform: uppercase; color: var(--pw-ink); line-height: 1;
+}
+.quote-venue { display: block; margin-top: 5px; font-family: var(--data); font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: var(--pw-dim); }
+.quote-status { display: inline-flex; align-items: center; gap: 8px; font-family: var(--data); font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--pw-dim); }
+.quote-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--down); }
+.quote[data-state="open"] .quote-status i { background: var(--up); box-shadow: 0 0 0 4px rgba(63,178,127,.16); }
+
+.quote-price { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin: 18px 0 0; }
+.quote-price strong {
+  font-family: var(--data); font-weight: 500; font-variant-numeric: tabular-nums;
+  font-size: clamp(34px, 4.6vw, 60px); line-height: 1; letter-spacing: -.02em; color: var(--pw-ink);
+}
+.quote-change { font-family: var(--data); font-size: clamp(14px, 1.4vw, 19px); font-variant-numeric: tabular-nums; color: var(--pw-dim); }
+.quote-change.up { color: var(--up); }
+.quote-change.dn { color: var(--down); }
+
+/* the frozen print: what a stock page shows after the bell */
+.quote-frozen {
+  margin: 14px 0 0; padding: 10px 14px; border-radius: 8px;
+  background: var(--pw-3); border: 1px solid var(--pw-line);
+  font-family: var(--data); font-size: 12.5px; color: var(--pw-mid);
+}
+.quote-frozen b { color: var(--pw-ink); font-weight: 500; }
+
+.quote-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 1px;
+  margin: 20px 0 0; background: var(--pw-line); border: 1px solid var(--pw-line);
+  border-radius: 10px; overflow: hidden;
+}
+.quote-stats > div { background: var(--pw-2); padding: 10px 13px; }
+.quote-stats dt { font-family: var(--data); font-size: 9px; letter-spacing: .13em; text-transform: uppercase; color: var(--pw-dim); }
+.quote-stats dd { margin: 4px 0 0; font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; color: var(--pw-ink); }
+
+/* ---- the account statement ---------------------------------------------- */
+.account-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 16px; }
+.account-connect {
+  border: 1px solid var(--pw-line); border-radius: 8px; cursor: pointer;
+  background: var(--pw-ink); color: var(--pw); padding: 8px 14px;
+  font-family: var(--ui); font-size: 13px; font-weight: 600;
+}
+.account-connect:hover { opacity: .88; }
+.account-empty { margin: 0; padding: 26px 0; text-align: center; color: var(--pw-dim); font-size: 14px; }
+.account-rows { display: grid; gap: 1px; background: var(--pw-line); border: 1px solid var(--pw-line); border-radius: 10px; overflow: hidden; margin: 0; }
+.account-rows > div { background: var(--pw-2); padding: 11px 14px; display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
+.account-rows dt { font-family: var(--data); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--pw-dim); }
+.account-rows dd { margin: 0; font-family: var(--data); font-size: 14px; font-variant-numeric: tabular-nums; color: var(--pw-ink); }
+.account-addr { font-family: var(--data); font-size: 12px; color: var(--pw-dim); margin: 0 0 12px; }
+
+.quote.is-sample .sample-chip { display: inline-flex; }
+/* he stands on the strip, not behind it */
+.mascot-hero { bottom: 34px; }

@@ -681,6 +681,139 @@ function renderTape(stats) {
   [rows, book].forEach((el) => el && el.closest('.floor-col') && el.closest('.floor-col').classList.toggle('is-sample', !real));
 }
 
+/* ---- the quote block, and your side of it --------------------------------
+   Every number here comes out of Swap events on the pool: open, high, low,
+   last, volume, and the print itself. When the market shuts, the block does
+   what a stock page does -- it freezes on the last trade and says so, rather
+   than blanking. */
+const px = (v) => v === null || v === undefined ? '—'
+  : (v >= 1 ? v.toFixed(4) : v.toPrecision(5));
+
+function sampleQuote(isOpen) {
+  // Derived from the same deterministic prints the tape draws, so the block
+  // and the tape never disagree. Marked SAMPLE on the page, and dropped the
+  // moment the pool returns a real trade.
+  const p = samplePrints(22).map((t) => Number(t.price));
+  const sizes = samplePrints(22).map((t) => Number(String(t.size).replace(/,/g, '')));
+  const open = p[p.length - 1], close = p[0];
+  return {
+    sample: true, isOpen,
+    last: { price: close, size: sizes[0], side: 'buy', at: Date.now() - 60000 },
+    open, high: Math.max(...p), low: Math.min(...p),
+    prevClose: open * 0.994,
+    change: (close - open * 0.994) / (open * 0.994),
+    volume: sizes.reduce((a, b) => a + b, 0),
+    tradeCount: p.length
+  };
+}
+
+function paintQuote(q) {
+  const el = document.querySelector('#quote');
+  if (!el || !q) return;
+  if (!q.last) q = { ...sampleQuote(q.isOpen), sessionLabel: q.sessionLabel };
+  el.classList.toggle('is-sample', Boolean(q.sample));
+  el.dataset.state = q.isOpen ? 'open' : 'closed';
+  const st = document.querySelector('#quoteStatus span');
+  if (st) st.textContent = q.isOpen ? 'Open' : (q.sessionLabel || 'Closed');
+
+  const last = q.last;
+  document.querySelector('#quoteLast').textContent = last ? px(last.price) : '—';
+
+  const ch = document.querySelector('#quoteChange');
+  if (q.change === null || q.change === undefined) { ch.textContent = '—'; ch.className = 'quote-change'; }
+  else {
+    const pct = q.change * 100;
+    ch.textContent = (pct >= 0 ? '▲ +' : '▼ ') + pct.toFixed(2) + '%';
+    ch.className = 'quote-change ' + (pct >= 0 ? 'up' : 'dn');
+  }
+
+  const set = (id, v) => { const n = document.querySelector(id); if (n) n.textContent = v; };
+  set('#qOpen', px(q.open)); set('#qHigh', px(q.high)); set('#qLow', px(q.low));
+  set('#qPrev', px(q.prevClose));
+  set('#qVol', q.volume === null ? '—' : Math.round(q.volume).toLocaleString('en-US'));
+  set('#qCount', q.tradeCount ? q.tradeCount.toLocaleString('en-US') : '—');
+
+  // the frozen print
+  const fz = document.querySelector('#quoteFrozen');
+  if (fz) {
+    if (!q.isOpen && last) {
+      const t = new Date(last.at).toLocaleTimeString('en-US', { timeZone: 'America/New_York' });
+      fz.innerHTML = `Closed. Last trade <b>${px(last.price)}</b> × <b>${Math.round(last.size).toLocaleString('en-US')}</b> at <b>${t} ET</b>.`;
+      fz.hidden = false;
+    } else if (!q.isOpen) {
+      fz.textContent = 'Closed. No trades on record yet.';
+      fz.hidden = false;
+    } else { fz.hidden = true; }
+  }
+}
+
+async function loadQuote() {
+  try {
+    const res = await fetch('/api/quote', { cache: 'no-store' });
+    if (!res.ok) return;
+    const q = await res.json();
+    paintQuote(q);
+    if (q.prints && q.prints.length) { lastPrints = q.prints; renderTape(null); }
+    lastQuotePrice = q.last ? q.last.price : null;
+    if (accountAddress) paintAccount();
+  } catch { /* the page is still readable without a quote */ }
+}
+
+/* ---- your account -------------------------------------------------------- */
+let accountAddress = null;
+let accountBalance = null;
+let lastQuotePrice = null;
+
+async function readBalance(addr) {
+  const cfg = publicConfig;
+  if (!cfg || !cfg.tokenAddress) return null;
+  const data = '0x70a08231' + addr.toLowerCase().replace('0x', '').padStart(64, '0');
+  try {
+    const out = await rpcCall(cfg.marketCalendar.rpcUrl, cfg.tokenAddress, data);
+    return Number(BigInt(out)) / 1e18;
+  } catch { return null; }
+}
+
+function paintAccount() {
+  const body = document.querySelector('#accountBody');
+  if (!body) return;
+  if (!accountAddress) {
+    body.innerHTML = '<p class="account-empty">Connect to see your position.</p>';
+    return;
+  }
+  const supply = 1792000000;
+  const bal = accountBalance;
+  const share = bal === null ? null : bal / supply;
+  const value = (bal !== null && lastQuotePrice) ? bal * lastQuotePrice : null;
+  body.innerHTML = `
+    <p class="account-addr">${accountAddress.slice(0, 6)}…${accountAddress.slice(-4)}</p>
+    <dl class="account-rows">
+      <div><dt>Position</dt><dd>${bal === null ? '—' : Math.round(bal).toLocaleString('en-US')}</dd></div>
+      <div><dt>% outstanding</dt><dd>${share === null ? '—' : (share * 100).toFixed(share < 0.0001 ? 4 : 2) + '%'}</dd></div>
+      <div><dt>Last price</dt><dd>${lastQuotePrice ? px(lastQuotePrice) : '—'}</dd></div>
+      <div><dt>Value</dt><dd>${value === null ? '—' : value.toPrecision(5)}</dd></div>
+    </dl>`;
+}
+
+async function connectAccount() {
+  if (!window.ethereum) return showToast('No compatible EVM wallet found.');
+  try {
+    const accts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    if (!accts || !accts.length) return;
+    accountAddress = accts[0];
+    const btn = document.querySelector('#accountConnect');
+    if (btn) btn.textContent = 'Connected';
+    accountBalance = await readBalance(accountAddress);
+    paintAccount();
+  } catch { showToast('Wallet connection cancelled.'); }
+}
+
+const accountConnect = document.querySelector('#accountConnect');
+if (accountConnect) accountConnect.addEventListener('click', connectAccount);
+
+setInterval(loadQuote, 20000);
+loadQuote();
+
 setInterval(updateClock, 1000);
 setInterval(loadRuntime, 60000);
 setInterval(verifyOnChain, 45000);

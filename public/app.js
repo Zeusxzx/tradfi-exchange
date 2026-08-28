@@ -168,21 +168,37 @@ function sceneLoop(host) {
     return { play() { tryPlay(layers[0]); }, set preload(v) { layers[0].preload = v; } };
   }
   let live = layers[0], standby = layers[1];
-  const HANDOVER = 2 / 30;
-  let armed = false;
+  const PREROLL  = 0.6;    // start the standby decoding well before it is needed
+  const HANDOVER = 2 / 30; // and only swap what is visible at the last moment
+  let armed = false, rolling = false;
 
   function watch() {
     live.requestVideoFrameCallback((now, meta) => {
-      if (!armed && live.duration && meta.mediaTime >= live.duration - HANDOVER) {
-        armed = true;
-        standby.classList.add('is-live');
-        standby.play().catch(() => {});
-        const finished = live;
-        live = standby;
-        standby = finished;
-        standby.classList.remove('is-live');
-        // rewind the one that just handed over, once it is safely out of sight
-        setTimeout(() => { standby.pause(); standby.currentTime = 0; armed = false; }, 90);
+      const d = live.duration;
+      if (d) {
+        // Spin the decoder up early, while the standby is still invisible.
+        // Calling play() at the moment of the swap made the handover pay for
+        // decoder start-up, and that showed as a hitch across the whole page
+        // once every loop -- which is what the ticker looked like it was doing.
+        if (!rolling && meta.mediaTime >= d - PREROLL) {
+          rolling = true;
+          standby.play().catch(() => {});
+        }
+        if (!armed && meta.mediaTime >= d - HANDOVER) {
+          armed = true;
+          // by now the standby is already producing frames, so this is a pure
+          // opacity swap on two promoted layers: compositor only, no decode
+          standby.classList.add('is-live');
+          const finished = live;
+          live = standby;
+          standby = finished;
+          standby.classList.remove('is-live');
+          setTimeout(() => {
+            standby.pause();
+            standby.currentTime = 0;
+            armed = false; rolling = false;
+          }, 120);
+        }
       }
       watch();
     });
@@ -411,7 +427,8 @@ personTargets.forEach((target) => target.addEventListener('click', () => openPer
 const openStoryBtn = document.querySelector('#openStory');
 if (openStoryBtn) openStoryBtn.addEventListener('click', () => openPersonCard(visibleState() === 'open' ? 'ivy' : 'mo'));
 document.querySelector('#closePerson').addEventListener('click', closePersonCard);
-document.querySelector('#openTrade').addEventListener('click', () => setTradeDrawer(true));
+const openTrade = document.querySelector('#openTrade');
+if (openTrade) openTrade.addEventListener('click', () => setTradeDrawer(true));
 const heroTrade = document.querySelector('#heroTrade');
 if (heroTrade) heroTrade.addEventListener('click', () => setTradeDrawer(true));
 document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
@@ -545,15 +562,61 @@ async function loadTokenStats() {
   });
 }
 
-/* ---- the tape ------------------------------------------------------------
-   Time and sales: the running list of prints a floor screen shows, newest at
-   the top -- time, price, size, side. It renders whatever the pool has
-   actually cleared. Before the pool exists there is nothing to print, and it
-   says so, because a tape of invented trades is a fabricated record. */
+/* ---- the floor: time & sales, and depth ----------------------------------
+   Time and sales is how a trading floor actually shows orders arriving: one
+   line per print, newest on top, time / price / size / side, green if it
+   lifted the offer and red if it hit the bid. The order book beside it is the
+   same data one step earlier -- resting bids and offers stacked away from the
+   mid, deepest at the edges.
+
+   Until the pool exists there is nothing real to draw, so both run on clearly
+   marked SAMPLE data: it is labelled on the page, and it is replaced by real
+   prints the moment `prints` comes back non-empty from the chain. Nothing here
+   is ever presented as a genuine trade record. */
+function samplePrints(n) {
+  const SAMPLE_MID = 0.0412;
+  // deterministic, so it does not reshuffle on every repaint
+  const out = []; let seed = 7;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  let t = new Date(); t.setHours(15, 58, 12, 0);
+  let px = SAMPLE_MID;
+  for (let i = 0; i < n; i++) {
+    const buy = rnd() > .45;
+    px = Math.max(0.0001, px + (buy ? 1 : -1) * SAMPLE_MID * rnd() * .004);
+    const size = Math.round((900 + rnd() * 48000) / 100) * 100;
+    out.push({
+      time: t.toTimeString().slice(0, 8),
+      price: px.toFixed(5),
+      size: size.toLocaleString('en-US'),
+      side: buy ? 'buy' : 'sell'
+    });
+    t = new Date(t.getTime() - Math.round(1200 + rnd() * 9000));
+  }
+  return out;
+}
+
+function sampleBook(levels) {
+  const SAMPLE_MID = 0.0412;
+  const rows = []; let seed = 21;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let i = levels - 1; i >= 0; i--) {
+    rows.push({ side: 'ask', price: (SAMPLE_MID * (1 + (i + 1) * .0015)).toFixed(5),
+                size: Math.round((2000 + rnd() * 70000) / 100) * 100 });
+  }
+  for (let i = 0; i < levels; i++) {
+    rows.push({ side: 'bid', price: (SAMPLE_MID * (1 - (i + 1) * .0015)).toFixed(5),
+                size: Math.round((2000 + rnd() * 70000) / 100) * 100 });
+  }
+  return rows;
+}
+
 function renderTape(stats) {
   if (stats && Array.isArray(stats.prints)) lastPrints = stats.prints;
   const state = document.querySelector('#tapeState');
   const rows = document.querySelector('#tapeRows');
+  const book = document.querySelector('#bookRows');
+  const spread = document.querySelector('#bookSpread');
+  const note = document.querySelector('#floorNote');
   if (!rows) return;
 
   const open = Boolean(marketStatus && marketStatus.isOpen);
@@ -562,19 +625,35 @@ function renderTape(stats) {
     state.lastChild.textContent = open ? ' Open' : ' Closed';
   }
 
-  const prints = lastPrints;
-  if (!prints.length) {
-    rows.innerHTML = `<li class="tape-empty">${
-      open ? 'No prints yet this session.' : 'The tape starts at the opening bell.'
-    }</li>`;
-    return;
-  }
+  const real = lastPrints.length > 0;
+  const prints = real ? lastPrints : samplePrints(14);
   rows.innerHTML = prints.map((t) => `<li class="${t.side === 'buy' ? 'buy' : 'sell'}">
-    <span>${t.time}</span>
-    <span class="r p">${t.price}</span>
-    <span class="r">${t.size}</span>
-    <span class="r">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
+    <span>${t.time}</span><span class="r p">${t.price}</span>
+    <span class="r">${t.size}</span><span class="r s">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
   </li>`).join('');
+
+  if (book) {
+    const levels = sampleBook(6);
+    const max = Math.max(...levels.map((l) => l.size));
+    book.innerHTML = levels.map((l) => {
+      const pct = Math.round((l.size / max) * 100);
+      return `<div class="book-row ${l.side}" data-w="${pct}">
+        <span class="bs">${l.side === 'bid' ? l.size.toLocaleString('en-US') : ''}</span>
+        <span class="c px">${l.price}</span>
+        <span class="r as">${l.side === 'ask' ? l.size.toLocaleString('en-US') : ''}</span>
+      </div>`;
+    }).join('');
+    book.querySelectorAll('.book-row').forEach((r) => {
+      r.style.setProperty('--depth', r.getAttribute('data-w') + '%');
+    });
+  }
+  if (spread) spread.textContent = real ? '' : 'Sample';
+  if (note) {
+    note.textContent = real
+      ? 'Every print that clears the pool, in the order the chain saw it.'
+      : 'Sample data — laid out the way it will look. Real prints replace it the moment the pool goes live.';
+  }
+  [rows, book].forEach((el) => el && el.closest('.floor-col') && el.closest('.floor-col').classList.toggle('is-sample', !real));
 }
 
 setInterval(updateClock, 1000);
@@ -674,10 +753,14 @@ schedulePlane();
     const open = (typeof visibleState === 'function') ? visibleState() === 'open' : false;
     if (builtFor !== (open ? 'open' : 'closed')) build(open);
     const v = values();
-    tracks.forEach((t) => t.querySelectorAll('[data-v]').forEach((n) => {
-      const k = n.getAttribute('data-v');
-      if (k in v && n.textContent !== v[k]) n.textContent = v[k];
-    }));
+    // write on a frame boundary: mutating text inside a track that is being
+    // transformed can otherwise land mid-frame and cost that frame
+    requestAnimationFrame(() => {
+      tracks.forEach((t) => t.querySelectorAll('[data-v]').forEach((n) => {
+        const k = n.getAttribute('data-v');
+        if (k in v && n.textContent !== v[k]) n.textContent = v[k];
+      }));
+    });
   }
 
   sizeSpace();

@@ -669,10 +669,10 @@ body { background: var(--slate); }
 
 /* three ideas, not three specs */
 .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 1px; background: var(--slate-line); border: 1px solid var(--slate-line); border-radius: 14px; overflow: hidden; }
-.how article { background: var(--slate-2); padding: clamp(24px, 3vw, 36px); }
+.how-grid article { background: var(--slate-2); padding: clamp(24px, 3vw, 36px); }
 .how-n { display: block; font-family: var(--data); font-size: 11px; font-weight: 500; letter-spacing: .16em; color: var(--slate-dim); }
-.how h3 { margin: 14px 0 10px; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.02; text-transform: uppercase; color: var(--slate-ink); }
-.how p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--slate-mid); }
+.how-grid h3 { margin: 14px 0 10px; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.02; text-transform: uppercase; color: var(--slate-ink); }
+.how-grid p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--slate-mid); }
 
 /* the tape — time and sales, the way a floor screen shows prints */
 .tape-state { display: inline-flex; align-items: center; gap: 8px; font-family: var(--data); font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--slate-dim); }
@@ -760,3 +760,95 @@ body { background: var(--slate); }
   .hud { top: auto; bottom: clamp(44px, 6vh, 70px); align-items: stretch; }
   .hud-clock, .hud-card { width: auto; }
 }
+
+/* both loop layers stay promoted, so handing over between them is a
+   compositor-only opacity swap and never a repaint of a full-screen video */
+.scene-layer { transform: translateZ(0); backface-visibility: hidden; will-change: opacity, transform; }
+.stage .scene-layer { transform: translateZ(0); }
+.board-track, #tickerTrack { will-change: transform; backface-visibility: hidden; }
+
+/* the wall is a market board: red after hours, green while it trades */
+.board-day .board-track { color: #52d17f; text-shadow: 0 0 8px rgba(82,209,127,.4); }
+.board-day .board-track em { color: rgba(82,209,127,.6); }
+.board-day .board-track i { background: rgba(82,209,127,.45); }
+.board-night .board-track { color: #ff5f52; text-shadow: 0 0 8px rgba(255,95,82,.42); }
+.board-night .board-track em { color: rgba(255,95,82,.58); }
+.board-night .board-track i { background: rgba(255,95,82,.42); }
+
+/* ---- second design pass --------------------------------------------------- */
+
+/* the panels ride the middle of the frame rather than the top edge */
+.hud { top: 50%; bottom: auto; transform: translateY(-50%); align-items: center; }
+@media (max-width: 900px) { .hud { top: auto; bottom: clamp(44px, 6vh, 70px); transform: none; align-items: stretch; } }
+
+/* the lower half is a gradient out of the building, not one flat grey */
+.paper {
+  background:
+    radial-gradient(1200px 520px at 12% -6%, rgba(120,140,175,.16), transparent 62%),
+    radial-gradient(1000px 460px at 92% 8%, rgba(90,110,145,.13), transparent 60%),
+    linear-gradient(180deg, #1b1f26 0%, #262b33 26%, #2b313a 62%, #20252c 100%);
+}
+body { background: #20252c; }
+.paper section { padding-block: clamp(46px, 6vw, 78px); }
+/* only one rule in the whole lower half: between the floor and the records */
+.paper section + section { border-top: 0; }
+.records { border-top: 1px solid var(--slate-line) !important; }
+
+/* the statement runs across, and stops short of the right edge */
+.pitch { display: block; }
+.pitch-top { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: end; margin-bottom: clamp(34px, 4.5vw, 58px); }
+.pitch h2 {
+  margin: 0; max-width: 15ch;
+  font-size: clamp(38px, 5.6vw, 76px); line-height: .93;
+}
+@media (max-width: 820px) { .pitch-top { grid-template-columns: 1fr; align-items: start; } .pitch h2 { max-width: none; } }
+
+/* the floor: tape and depth, shoulder to shoulder */
+.floor-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(18px, 2.4vw, 34px); align-items: start; }
+@media (max-width: 940px) { .floor-grid { grid-template-columns: 1fr; } }
+.floor-col .section-head { margin-bottom: 14px; }
+.floor-col .section-head h2 { font-size: clamp(22px, 2.4vw, 30px); }
+.floor-col.is-sample .tape, .floor-col.is-sample .book { position: relative; }
+.floor-col.is-sample .tape::after, .floor-col.is-sample .book::after {
+  content: "Sample"; position: absolute; top: 9px; right: 12px; z-index: 2;
+  padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,.10);
+  color: var(--slate-dim); font-family: var(--data); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase; pointer-events: none;
+}
+.tape-rows { max-height: 296px; }
+.tape-rows li.buy .s, .tape-rows li.buy .p { color: var(--up); }
+.tape-rows li.sell .s, .tape-rows li.sell .p { color: var(--down); }
+.book-spread { font-family: var(--data); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--slate-dim); }
+
+.book { border: 1px solid var(--slate-line); border-radius: 12px; overflow: hidden; background: #21262d; }
+.book-cols, .book-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  padding: 9px 16px; font-family: var(--data); font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.book-cols { background: var(--slate-3); color: var(--slate-dim); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.book-cols .c, .book-row .c { text-align: center; }
+.book-cols .r, .book-row .r { text-align: right; }
+.book-row { position: relative; border-top: 1px solid rgba(255,255,255,.05); color: var(--slate-ink); }
+/* the depth bar grows from the side its resting orders sit on */
+.book-row::before {
+  content: ""; position: absolute; top: 0; bottom: 0; width: var(--depth, 0%);
+  opacity: .18; pointer-events: none;
+}
+.book-row.bid::before { left: 0; background: var(--up); }
+.book-row.ask::before { right: 0; background: var(--down); }
+.book-row > * { position: relative; }
+.book-row.bid .px { color: var(--up); }
+.book-row.ask .px { color: var(--down); }
+
+/* records: the register and the build notes, one block */
+.records-sub {
+  margin: clamp(38px, 5vw, 62px) 0 18px;
+  font-family: var(--display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(22px, 2.4vw, 30px); color: var(--slate-ink);
+}
+.specs { display: grid; gap: 1px; margin: 0; background: var(--slate-line); border: 1px solid var(--slate-line); border-radius: 12px; overflow: hidden; }
+.specs > div { background: var(--slate-2); padding: 14px 18px; display: grid; grid-template-columns: minmax(120px, 190px) 1fr; gap: 18px; align-items: baseline; }
+.specs dt { font-family: var(--data); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--slate-dim); }
+.specs dd { margin: 0; font-size: 14px; color: var(--slate-mid); }
+.specs code { background: rgba(255,255,255,.07); color: var(--slate-ink); padding: 1px 6px; border-radius: 3px; }
+@media (max-width: 620px) { .specs > div { grid-template-columns: 1fr; gap: 5px; } }

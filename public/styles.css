@@ -107,7 +107,9 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
   opacity: calc(1 - var(--night-mix));
 }
 .board-night {
-  left: 29.77%; top: 28.19%; width: 40.47%; height: 10.69%;
+  /* re-measured against the new night render (the one with the subway) —
+     its board sits higher, wider and shallower than the previous artwork */
+  left: 26.0%; top: 32.9%; width: 44.5%; height: 7.9%;
   background: #05070c; box-shadow: none;
   opacity: var(--night-mix);
 }

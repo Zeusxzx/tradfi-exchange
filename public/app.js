@@ -21,6 +21,7 @@ const videoDay = document.querySelector('#videoDay');
 const videoNight = document.querySelector('#videoNight');
 const chainProofLink = document.querySelector('#chainProofLink');
 let closesAtEpoch = null;
+let lastPrints = [];
 
 const people = {
   ivy: { number: 'EMPLOYEE 001', name: 'Ivy Mercado', role: 'Head trader · night DJ', open: 'Ivy moves between the center desk and the glass wall all day, reading the room faster than the screens. At the bell, she leaves the floor for a booth downtown.', closed: 'Ivy clocked out at the bell. She is across town turning the closing candles into the first track of the night.', openLocation: 'THIRD FLOOR · EQUITIES', closedLocation: 'OFF DUTY · LOWER EAST SIDE' },
@@ -242,6 +243,7 @@ function renderView() {
     ? 'Live'
     : `Previewing ${state === 'open' ? 'market-open' : 'after-hours'}`;
   renderHud(state);
+  renderTape(null);
   renderSystems();
   syncVideoPlayback();
   closePersonCard();
@@ -517,11 +519,13 @@ async function loadTokenStats() {
   const link = document.querySelector('#listingLink');
   if (link && stats.explorerUrl) link.href = stats.explorerUrl;
 
+  renderTape(stats);
+
   const body = document.querySelector('#holderRows');
   if (!body) return;
   const rows = stats.topHolders || [];
   if (!rows.length) {
-    body.innerHTML = '<tr class="listing-empty"><td colspan="4">No holders on record yet.</td></tr>';
+    body.innerHTML = '<tr class="listing-empty"><td colspan="4">The register opens with the book.</td></tr>';
     return;
   }
   body.innerHTML = rows.map((h) => {
@@ -539,6 +543,38 @@ async function loadTokenStats() {
   body.querySelectorAll('.bar').forEach((bar) => {
     bar.style.width = bar.getAttribute('data-w') + '%';
   });
+}
+
+/* ---- the tape ------------------------------------------------------------
+   Time and sales: the running list of prints a floor screen shows, newest at
+   the top -- time, price, size, side. It renders whatever the pool has
+   actually cleared. Before the pool exists there is nothing to print, and it
+   says so, because a tape of invented trades is a fabricated record. */
+function renderTape(stats) {
+  if (stats && Array.isArray(stats.prints)) lastPrints = stats.prints;
+  const state = document.querySelector('#tapeState');
+  const rows = document.querySelector('#tapeRows');
+  if (!rows) return;
+
+  const open = Boolean(marketStatus && marketStatus.isOpen);
+  if (state) {
+    state.classList.toggle('is-open', open);
+    state.lastChild.textContent = open ? ' Open' : ' Closed';
+  }
+
+  const prints = lastPrints;
+  if (!prints.length) {
+    rows.innerHTML = `<li class="tape-empty">${
+      open ? 'No prints yet this session.' : 'The tape starts at the opening bell.'
+    }</li>`;
+    return;
+  }
+  rows.innerHTML = prints.map((t) => `<li class="${t.side === 'buy' ? 'buy' : 'sell'}">
+    <span>${t.time}</span>
+    <span class="r p">${t.price}</span>
+    <span class="r">${t.size}</span>
+    <span class="r">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
+  </li>`).join('');
 }
 
 setInterval(updateClock, 1000);

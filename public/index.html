@@ -117,24 +117,62 @@
       </section>
 
       <div class="paper">
-        <section class="paper-lede">
-          <h2>Three things, then you can go.</h2>
-          <ol class="paper-points">
-            <li><b>It is a memecoin.</b> Plain ERC-20. No tax, no owner, no transfer hooks.</li>
-            <li><b>It only trades 9:30–4, weekdays.</b> New York hours. Closed on NYSE holidays, 1:00 on half days.</li>
-            <li><b>The contract enforces it, not us.</b> Outside those hours a swap reverts on-chain. Nobody can turn that off.</li>
-          </ol>
+        <section class="pitch">
+          <h2>The market<br />closes.<br /><em>So does<br />the coin.</em></h2>
+          <p>Half past nine to four, New York time. Outside that, nobody trades it.
+            Not you, not us, not the guy running a bot at three in the morning.</p>
+        </section>
+
+        <section class="how" aria-label="How it works">
+          <div class="how-grid">
+          <article>
+            <span class="how-n">01</span>
+            <h3>It keeps hours</h3>
+            <p>Opens with the bell. Shuts with the bell. Weekends and holidays off,
+              same as the people it's named after.</p>
+          </article>
+          <article>
+            <span class="how-n">02</span>
+            <h3>Nobody holds a key</h3>
+            <p>The hours live in the contract, not on this website. There is no
+              off switch, no admin, and no exception for anyone — us included.</p>
+          </article>
+          <article>
+            <span class="how-n">03</span>
+            <h3>Miss it and you wait</h3>
+            <p>Try to buy at 4:01 and the chain turns you down. Come back in the
+              morning like everybody else on the floor.</p>
+          </article>
+          </div>
+        </section>
+
+        <section class="tape-section" aria-labelledby="tapeTitle">
+          <div class="section-head">
+            <div>
+              <span class="section-eyebrow">Time &amp; sales</span>
+              <h2 id="tapeTitle">The tape</h2>
+            </div>
+            <span class="tape-state" id="tapeState"><i></i> Closed</span>
+          </div>
+          <div class="tape">
+            <div class="tape-cols" aria-hidden="true">
+              <span>Time</span><span class="r">Price</span><span class="r">Size</span><span class="r">Side</span>
+            </div>
+            <ol class="tape-rows" id="tapeRows">
+              <li class="tape-empty">The tape starts at the opening bell.</li>
+            </ol>
+          </div>
+          <p class="section-note">Every print that clears the pool, in the order the chain saw it.</p>
         </section>
 
         <section class="listing" aria-labelledby="listingTitle">
-          <div class="listing-head">
+          <div class="section-head">
             <div>
-              <span class="listing-sym" data-token-symbol>$TRADFI</span>
+              <span class="section-eyebrow" data-token-symbol>$TRADFI</span>
               <h2 id="listingTitle">Holders of record</h2>
             </div>
             <div class="listing-meta">
               <span><b data-stat="holders">—</b> holders</span>
-              <span><b data-stat="supply">—</b> shares outstanding</span>
               <a id="listingLink" href="#" target="_blank" rel="noreferrer">Full register ↗</a>
             </div>
           </div>
@@ -149,26 +187,26 @@
                 </tr>
               </thead>
               <tbody id="holderRows">
-                <tr class="listing-empty"><td colspan="4">Reading the register…</td></tr>
+                <tr class="listing-empty"><td colspan="4">The register opens with the book.</td></tr>
               </tbody>
             </table>
           </div>
-          <p class="listing-note">Read live from the token contract on Robinhood Chain. Addresses marked
-            <span class="tag">contract</span> are pools and locks, not people.</p>
         </section>
 
-        <section class="specs" aria-label="Contract details">
-          <dl>
-            <div><dt>Trading window</dt><dd>09:30–16:00 ET, Mon–Fri</dd></div>
-            <div><dt>Enforced by</dt><dd>Uniswap v4 hook</dd></div>
-            <div><dt>Reverts with</dt><dd><code>MarketClosed(nextOpen)</code></dd></div>
-            <div><dt>Calendar</dt><dd>On-chain — DST, holidays, half days</dd></div>
-            <div><dt>Supply</dt><dd>1,792,000,000 <span>the NYSE was founded in 1792</span></dd></div>
-            <div><dt>Liquidity</dt><dd>Pooled and locked permanently</dd></div>
-            <div><dt>Swap fee</dt><dd>1%</dd></div>
-            <div><dt>Network</dt><dd>Robinhood Chain · 4663</dd></div>
-          </dl>
-          <a class="specs-link" id="chainProofLink" href="#" target="_blank" rel="noreferrer">MarketCalendar on the explorer ↗</a>
+        <section class="fineprint">
+          <details>
+            <summary>The technical bit, for the three people who want it</summary>
+            <dl>
+              <div><dt>Hours</dt><dd>09:30–16:00 ET, Mon–Fri · 13:00 on half days</dd></div>
+              <div><dt>Enforced by</dt><dd>A Uniswap v4 hook that checks <code>MarketCalendar.isMarketOpen()</code> before any swap</dd></div>
+              <div><dt>Outside hours</dt><dd>The swap reverts with <code>MarketClosed(nextOpen)</code></dd></div>
+              <div><dt>Calendar</dt><dd>On-chain — daylight saving, holidays and half days all stored in the contract</dd></div>
+              <div><dt>Token</dt><dd>Plain ERC-20 · no tax, no owner, no transfer hooks</dd></div>
+              <div><dt>Liquidity</dt><dd>Pooled and locked permanently · 1% swap fee</dd></div>
+              <div><dt>Network</dt><dd>Robinhood Chain · 4663</dd></div>
+            </dl>
+            <a class="specs-link" id="chainProofLink" href="#" target="_blank" rel="noreferrer">MarketCalendar on the explorer ↗</a>
+          </details>
         </section>
       </div>
 

@@ -365,7 +365,7 @@ async function loadRuntime() {
     marketStatus = await statusResponse.json();
     document.querySelectorAll('[data-token-name]').forEach((element) => { element.textContent = publicConfig.tokenName; });
     document.querySelectorAll('[data-token-symbol]').forEach((element) => { element.textContent = `$${publicConfig.tokenSymbol}`; });
-    document.title = `${publicConfig.tokenName} — the memecoin that keeps banker's hours`;
+    document.title = `${publicConfig.tokenName} — a memecoin on New York Stock Exchange hours`;
     renderMarket();
     verifyOnChain();
   } catch {
@@ -640,7 +640,6 @@ function renderTape(stats) {
   const rows = document.querySelector('#tapeRows');
   const book = document.querySelector('#bookRows');
   const spread = document.querySelector('#bookSpread');
-  const note = document.querySelector('#floorNote');
   if (!rows) return;
 
   const open = Boolean(marketStatus && marketStatus.isOpen);
@@ -650,14 +649,14 @@ function renderTape(stats) {
   }
 
   const real = lastPrints.length > 0;
-  const prints = real ? lastPrints : samplePrints(14);
+  const prints = real ? lastPrints : samplePrints(22);
   rows.innerHTML = prints.map((t) => `<li class="${t.side === 'buy' ? 'buy' : 'sell'}">
     <span>${t.time}</span><span class="r p">${t.price}</span>
     <span class="r">${t.size}</span><span class="r s">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
   </li>`).join('');
 
   if (book) {
-    const levels = sampleBook(6);
+    const levels = sampleBook(11);
     const max = Math.max(...levels.map((l) => l.size));
     book.innerHTML = levels.map((l) => {
       const pct = Math.round((l.size / max) * 100);
@@ -671,12 +670,7 @@ function renderTape(stats) {
       r.style.setProperty('--depth', r.getAttribute('data-w') + '%');
     });
   }
-  if (spread) spread.textContent = real ? '' : 'Sample';
-  if (note) {
-    note.textContent = real
-      ? 'Every print that clears the pool, in the order the chain saw it.'
-      : 'Sample data — laid out the way it will look. Real prints replace it the moment the pool goes live.';
-  }
+  if (spread) spread.textContent = '';
   [rows, book].forEach((el) => el && el.closest('.floor-col') && el.closest('.floor-col').classList.toggle('is-sample', !real));
 }
 

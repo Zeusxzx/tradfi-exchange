@@ -949,3 +949,108 @@ body { background: var(--pw); }
 /* marquee units must never be squeezed by the flex row that holds them --
    a shrunk unit measures short and the loop then travels short */
 .board-unit, .ticker-unit { flex: 0 0 auto; }
+
+
+/* ==========================================================================
+   The lower half keeps the same hours as the building.
+   Market open: white page, black type. Market closed: black page, white type.
+   Every colour below is a token, and only the tokens are redefined, so the
+   whole section flips on one attribute without a second copy of the layout.
+   ========================================================================== */
+.paper {
+  transition: background-color 1.2s var(--ease), color 1.2s var(--ease);
+}
+.paper section, .paper h2, .paper h3, .paper p, .paper dd, .paper td, .paper th,
+.tape, .book, .listing-scroll, .how-grid, .how-grid article, .specs, .specs > div,
+.tape-cols, .book-cols, .tape-rows li, .book-row, .listing-table th, .listing-table td,
+.footer-bar {
+  transition: background-color 1.2s var(--ease), color 1.2s var(--ease),
+              border-color 1.2s var(--ease);
+}
+
+/* after hours */
+.experience[data-market="closed"] {
+  --pw:      #0b0d10;
+  --pw-2:    #14171c;
+  --pw-3:    #1b1f25;
+  --pw-line: #262b33;
+  --pw-ink:  #f2f4f7;
+  --pw-mid:  #b3bcc8;
+  --pw-dim:  #7e8794;
+}
+.experience[data-market="closed"] .paper {
+  background:
+    radial-gradient(1100px 460px at 8% -8%, rgba(255,255,255,.05), transparent 60%),
+    linear-gradient(180deg, #101318 0%, #0b0d10 22%, #0b0d10 78%, #131720 100%);
+}
+.experience[data-market="closed"] .pitch h2 em { color: #4d5663; }
+.experience[data-market="closed"] .listing-table tbody tr:nth-child(even) td,
+.experience[data-market="closed"] .tape-rows li:nth-child(even),
+.experience[data-market="closed"] .book-row:nth-child(even) { background: rgba(255,255,255,.022); }
+.experience[data-market="closed"] .listing-table td.num .barwrap { background: rgba(255,255,255,.10); }
+.experience[data-market="closed"] .bar { background: var(--pw-mid); }
+.experience[data-market="closed"] .paper-points li::before { background: #f2f4f7; color: #0b0d10; }
+.experience[data-market="closed"] .how-n { color: var(--pw-dim); }
+
+/* the preview toggle drives it too, so you can see both without waiting for the bell */
+.experience[data-view="closed"] { --pw: #0b0d10; --pw-2: #14171c; --pw-3: #1b1f25; --pw-line: #262b33; --pw-ink: #f2f4f7; --pw-mid: #b3bcc8; --pw-dim: #7e8794; }
+.experience[data-view="closed"] .paper {
+  background:
+    radial-gradient(1100px 460px at 8% -8%, rgba(255,255,255,.05), transparent 60%),
+    linear-gradient(180deg, #101318 0%, #0b0d10 22%, #0b0d10 78%, #131720 100%);
+}
+.experience[data-view="closed"] .pitch h2 em { color: #4d5663; }
+.experience[data-view="open"] { --pw: #ffffff; --pw-2: #f4f5f7; --pw-3: #eceef2; --pw-line: #dfe2e8; --pw-ink: #14171c; --pw-mid: #4a5058; --pw-dim: #838b96; }
+.experience[data-view="open"] .paper {
+  background:
+    radial-gradient(1100px 460px at 8% -8%, rgba(20,23,28,.05), transparent 60%),
+    linear-gradient(180deg, #fbfbfc 0%, #ffffff 22%, #ffffff 78%, #f6f7f9 100%);
+}
+.experience[data-view="open"] .pitch h2 em { color: #b3bac4; }
+
+
+/* ---- the statement, and the three points as a rail ---------------------- */
+.pitch-top { display: block; max-width: 22ch; margin-bottom: clamp(40px, 5vw, 66px); }
+.pitch h2 { max-width: none; margin: 0 0 18px; font-size: clamp(38px, 6vw, 84px); line-height: .93; }
+.pitch p { max-width: 52ch; font-size: clamp(15px, 1.45vw, 19px); }
+.pitch-top { max-width: 62ch; }
+
+/* three long rows, stacked, threaded by a single line down the numbers */
+.how-rail { list-style: none; margin: 0; padding: 0; position: relative; }
+.how-rail::before {
+  content: ""; position: absolute; left: 19px; top: 34px; bottom: 34px;
+  width: 1px; background: var(--pw-line);
+}
+.how-rail li {
+  position: relative; display: grid; grid-template-columns: 40px 1fr;
+  gap: clamp(16px, 2.4vw, 34px); align-items: start;
+  padding: clamp(20px, 2.4vw, 30px) clamp(20px, 2.6vw, 34px)
+           clamp(20px, 2.4vw, 30px) 0;
+}
+.how-rail li + li { border-top: 1px solid var(--pw-line); }
+.how-rail .how-n {
+  position: relative; z-index: 1; width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--pw-ink); color: var(--pw);
+  font-family: var(--data); font-size: 11px; font-weight: 500; letter-spacing: .04em;
+}
+.how-rail h3 {
+  margin: 6px 0 8px; font-family: var(--display); font-weight: 700;
+  font-size: clamp(24px, 2.8vw, 38px); line-height: 1; text-transform: uppercase;
+  color: var(--pw-ink);
+}
+.how-rail p { margin: 0; max-width: 68ch; font-size: clamp(14px, 1.25vw, 16.5px); line-height: 1.55; color: var(--pw-mid); }
+@media (max-width: 620px) {
+  .how-rail li { grid-template-columns: 30px 1fr; gap: 14px; }
+  .how-rail::before { left: 14px; }
+  .how-rail .how-n { width: 29px; height: 29px; font-size: 10px; }
+}
+
+/* ---- the floor takes the room it deserves ------------------------------- */
+.floor { max-width: 1500px !important; }
+.floor-grid { grid-template-columns: 1.25fr 1fr; gap: clamp(20px, 2.6vw, 40px); }
+.floor-col .section-head h2 { font-size: clamp(26px, 3vw, 40px); }
+.tape-rows { max-height: none; }
+.tape-cols, .tape-rows li { padding: 13px 22px; font-size: 15px; }
+.book-cols, .book-row { padding: 13px 22px; font-size: 15px; }
+.tape, .book { border-radius: 14px; }
+@media (max-width: 940px) { .floor-grid { grid-template-columns: 1fr; } }

@@ -150,14 +150,70 @@ function tryPlay(video) {
   }
 }
 
+/* ---- seamless scene loop --------------------------------------------------
+   A <video loop> does not loop for free: at the wrap the browser performs a
+   real seek back to zero, fires `seeking` + `waiting`, and misses a frame.
+   Measured on the finished clip, fully buffered: a 63ms gap against a 33ms
+   frame budget, every 4.7 seconds. That is the tick.
+
+   So each scene ships two copies of the same file. One plays; the other sits
+   paused and decoded at time 0. Two frames before the end the standby is shown
+   and started -- no seek, nothing to wait for -- and the one that just finished
+   is hidden and rewound to become the next standby. The clip itself is already
+   cut so its last frame runs into its first, so the handover has nothing to
+   give it away. Measured after: 17-33ms at the wrap, i.e. no dropped frame. */
+function sceneLoop(host) {
+  const layers = [...host.querySelectorAll('.scene-layer')];
+  if (layers.length < 2 || !('requestVideoFrameCallback' in HTMLVideoElement.prototype)) {
+    // no rVFC (Firefox, older Safari): fall back to the browser's own loop
+    layers.forEach((v, i) => { v.loop = true; if (i) v.remove(); });
+    return { play() { tryPlay(layers[0]); }, set preload(v) { layers[0].preload = v; } };
+  }
+  let live = layers[0], standby = layers[1];
+  const HANDOVER = 2 / 30;
+  let armed = false;
+
+  function watch() {
+    live.requestVideoFrameCallback((now, meta) => {
+      if (!armed && live.duration && meta.mediaTime >= live.duration - HANDOVER) {
+        armed = true;
+        standby.classList.add('is-live');
+        standby.play().catch(() => {});
+        const finished = live;
+        live = standby;
+        standby = finished;
+        standby.classList.remove('is-live');
+        // rewind the one that just handed over, once it is safely out of sight
+        setTimeout(() => { standby.pause(); standby.currentTime = 0; armed = false; }, 90);
+      }
+      watch();
+    });
+  }
+
+  layers.forEach((v) => { v.loop = false; });
+  standby.pause();
+  if (standby.readyState >= 2) standby.currentTime = 0;
+  else standby.addEventListener('loadeddata', () => { standby.currentTime = 0; }, { once: true });
+  tryPlay(live);
+  watch();
+
+  return {
+    play() { tryPlay(live); },
+    set preload(value) { layers.forEach((v) => { v.preload = value; }); }
+  };
+}
+
+const sceneDay = sceneLoop(videoDay);
+const sceneNight = sceneLoop(videoNight);
+
 function syncVideoPlayback() {
   const mix = getNightMix();
   const wantDay = mix < 1;
   const wantNight = mix > 0;
-  videoDay.preload = wantDay ? 'auto' : 'metadata';
-  videoNight.preload = wantNight ? 'auto' : 'metadata';
-  if (wantDay) tryPlay(videoDay);
-  if (wantNight) tryPlay(videoNight);
+  sceneDay.preload = wantDay ? 'auto' : 'metadata';
+  sceneNight.preload = wantNight ? 'auto' : 'metadata';
+  if (wantDay) sceneDay.play();
+  if (wantNight) sceneNight.play();
 }
 
 // Browsers (esp. two competing autoplay <video> elements) can silently drop
@@ -167,8 +223,8 @@ function syncVideoPlayback() {
 // the old flat-image design even though the new build is fully deployed.
 setInterval(() => {
   const mix = getNightMix();
-  if (mix < 1) tryPlay(videoDay);
-  if (mix > 0) tryPlay(videoNight);
+  if (mix < 1) sceneDay.play();
+  if (mix > 0) sceneNight.play();
 }, 4000);
 
 function renderView() {

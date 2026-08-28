@@ -831,22 +831,52 @@ schedulePlane();
       source.forEach((n) => unit.appendChild(n.cloneNode(true)));
     }
 
-    const span = unit.getBoundingClientRect().width;
     track.appendChild(unit.cloneNode(true));
 
-    // Driven by the Web Animations API, not a CSS @keyframes rule.
-    // The old rule interpolated calc(var(--marquee-span) * -1); Chromium
-    // never resolved it, so the computed transform stayed `none` and the
-    // tape sat perfectly still while reporting itself as running.
-    const px = Math.round(span);
-    const dur = Math.max(min, span / pxPerSec);
+    // Measure the travel AFTER both copies are in the DOM, as the distance
+    // between them -- which is the seamless distance by definition.
+    //
+    // It used to measure the first unit while it was the only child. In a
+    // flex row narrower than its content a lone child gets shrunk, so the
+    // number came back small: 814px against a real unit width of 874. Every
+    // loop therefore jumped 60px backwards on the board and 156px on the
+    // bottom strip. That was the jitter -- not the animation, the ruler.
     track.style.animation = 'none';
-    if (track._marqueeAnim) track._marqueeAnim.cancel();
-    track._marqueeAnim = track.animate(
-      [{ transform: 'translate3d(0,0,0)' },
-       { transform: `translate3d(${-px}px,0,0)` }],
-      { duration: dur * 1000, iterations: Infinity, easing: 'linear' }
-    );
+
+    // Measure the travel as the distance between the two copies -- the
+    // seamless distance by definition -- but only once layout has settled.
+    //
+    // Measuring inline used to return a number taken while the row was still
+    // being laid out (and, before flex:0 0 auto, while a lone child was being
+    // shrunk). The board travelled 814px against a real 874px unit, so every
+    // loop snapped 60px backwards. That was the jitter: not the animation,
+    // the ruler. Now it measures on the next frame and checks its own work.
+    const arm = () => {
+      const kids = track.children;
+      if (kids.length < 2) return;
+      const span = Math.max(1, kids[1].getBoundingClientRect().left
+                             - kids[0].getBoundingClientRect().left);
+      if (track._marqueeSpan && Math.abs(track._marqueeSpan - span) < 0.5) return;
+      track._marqueeSpan = span;
+      const dur = Math.max(min, span / pxPerSec);
+      const was = track._marqueeAnim;
+      const progress = was && was.effect
+        ? (was.currentTime || 0) / was.effect.getTiming().duration
+        : 0;
+      if (was) was.cancel();
+      const anim = track.animate(
+        [{ transform: 'translate3d(0,0,0)' },
+         { transform: `translate3d(${-span}px,0,0)` }],
+        { duration: dur * 1000, iterations: Infinity, easing: 'linear' }
+      );
+      // pick up where the old one left off, so a re-measure is not a visible restart
+      anim.currentTime = (progress % 1) * dur * 1000;
+      track._marqueeAnim = anim;
+    };
+    requestAnimationFrame(() => requestAnimationFrame(arm));
+    // and check again once, after fonts and container queries have settled
+    setTimeout(arm, 900);
+    setTimeout(arm, 2500);
   }
 
   function run() {
@@ -858,6 +888,8 @@ schedulePlane();
 
   window.__marqueeRig = run;
   run();
+  // the display face changes every advance width when it swaps in; measure again
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
   let t;
   window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(run, 180); });
 })();

@@ -945,3 +945,7 @@ body { background: var(--pw); }
 .hud-stats { margin-top: auto; }
 .hud-card .hud-cta { margin-top: auto; }
 @media (max-width: 900px) { .hud { align-items: stretch; } }
+
+/* marquee units must never be squeezed by the flex row that holds them --
+   a shrunk unit measures short and the loop then travels short */
+.board-unit, .ticker-unit { flex: 0 0 auto; }

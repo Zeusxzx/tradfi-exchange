@@ -552,11 +552,19 @@ schedulePlane();
     const span = unit.getBoundingClientRect().width;
     track.appendChild(unit.cloneNode(true));
 
-    const name = 'marquee' + Math.round(span);
+    // Driven by the Web Animations API, not a CSS @keyframes rule.
+    // The old rule interpolated calc(var(--marquee-span) * -1); Chromium
+    // never resolved it, so the computed transform stayed `none` and the
+    // tape sat perfectly still while reporting itself as running.
+    const px = Math.round(span);
     const dur = Math.max(min, span / pxPerSec);
-    track.style.setProperty('--marquee-span', span + 'px');
-    track.style.animation = `marqueeRun ${dur}s linear infinite`;
-    void name;
+    track.style.animation = 'none';
+    if (track._marqueeAnim) track._marqueeAnim.cancel();
+    track._marqueeAnim = track.animate(
+      [{ transform: 'translate3d(0,0,0)' },
+       { transform: `translate3d(${-px}px,0,0)` }],
+      { duration: dur * 1000, iterations: Infinity, easing: 'linear' }
+    );
   }
 
   function run() {
@@ -565,9 +573,6 @@ schedulePlane();
     });
   }
 
-  const style = document.createElement('style');
-  style.textContent = '@keyframes marqueeRun{from{transform:translateX(0)}to{transform:translateX(calc(var(--marquee-span) * -1))}}';
-  document.head.appendChild(style);
 
   window.__marqueeRig = run;
   run();

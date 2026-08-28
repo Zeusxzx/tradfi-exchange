@@ -100,17 +100,23 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 .board-tape {
   position: absolute; z-index: 6; overflow: hidden; display: flex; align-items: center;
   border-radius: 1px; pointer-events: none; transition: opacity 1.5s ease;
+  /* the board is its own size container, so the text is sized against the
+     board's real height rather than some far-away ancestor's width. */
+  container-type: size;
 }
 .board-day {
-  left: 33.44%; top: 38.75%; width: 31.09%; height: 5%;
-  background: rgba(4, 7, 11, .82); box-shadow: inset 0 0 0 1px rgba(242,243,244,.16);
+  /* measured off the blank-board day render (1280x720): the flat screen face
+     is x 420..824, y 279..315. No background fill any more — the board in the
+     artwork is genuinely empty, so the text sits straight on it. */
+  left: 32.81%; top: 38.75%; width: 31.56%; height: 5.00%;
+  background: none; box-shadow: none;
   opacity: calc(1 - var(--night-mix));
 }
 .board-night {
-  /* re-measured against the new night render (the one with the subway) —
-     its board sits higher, wider and shallower than the previous artwork */
-  left: 26.0%; top: 32.9%; width: 44.5%; height: 7.9%;
-  background: #05070c; box-shadow: none;
+  /* measured off the blank-board night render (1280x720): flat face is
+     x 422..863, y 244..276. Also unfilled — the artwork board is empty. */
+  left: 32.97%; top: 33.89%; width: 34.45%; height: 4.44%;
+  background: none; box-shadow: none;
   opacity: var(--night-mix);
 }
 .experience[data-view="open"] .board-night { opacity: 0; }
@@ -118,12 +124,13 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 .experience[data-view="open"] .board-day { opacity: 1; }
 .experience[data-view="closed"] .board-day { opacity: 0; }
 /* the night wall is a green LED board in the artwork — match it */
-.board-night .board-track { color: #9ed44a; font-size: clamp(8px, 1.55cqw, 26px); text-shadow: 0 0 6px rgba(158,212,74,.45); }
+.board-night .board-track { color: #9ed44a; text-shadow: 0 0 7px rgba(158,212,74,.5); }
 .board-night .board-track em { color: rgba(158,212,74,.55); }
 .board-night .board-track i { background: rgba(158,212,74,.4); }
 .board-track {
   display: flex; gap: 0; white-space: nowrap; padding-left: 0;
-  font-size: clamp(6px, .92cqw, 15px); letter-spacing: .11em; line-height: 1;
+  /* 54% of the board's own height — fills the panel at every screen size */
+  font-size: clamp(7px, 54cqh, 34px); letter-spacing: .09em; line-height: 1;
   color: var(--amber); font-variant-numeric: tabular-nums;
   animation: boardScroll 42s linear infinite; will-change: transform;
 }

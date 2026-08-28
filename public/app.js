@@ -398,6 +398,11 @@ updateClock();
 setInterval(updateClock, 1000);
 setInterval(loadRuntime, 60000);
 setInterval(verifyOnChain, 45000);
+/* keep the gate's open/shut dot in step with the live read */
+setInterval(() => {
+  const dot = document.querySelector('#chainProofDot');
+  if (dot) dot.classList.toggle('is-open', !!(marketStatus && marketStatus.isOpen));
+}, 1000);
 loadRuntime();
 schedulePlane();
 

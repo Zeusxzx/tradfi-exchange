@@ -20,8 +20,8 @@
   --down: #d8564b;
   --ease: cubic-bezier(.2, .75, .2, 1);
 
-  --display: "Big Shoulders Display", "Oswald", "Helvetica Neue", sans-serif;
-  --ui:      "Inter Tight", "Inter", -apple-system, "Helvetica Neue", sans-serif;
+  --display: "Khand", "Oswald", "Helvetica Neue", sans-serif;
+  --ui:      "Hind", "Inter", -apple-system, "Helvetica Neue", sans-serif;
   --data:    "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 * { box-sizing: border-box; }
@@ -37,6 +37,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 1px solid var(--amber); outline-offset: 4px; }
 code { font-family: var(--data); font-size: .92em; color: var(--paper); background: rgba(242,243,244,.07); padding: 1px 6px; border-radius: 3px; }
 
+.experience { --night-mix: 1; }  /* default until the chain read lands; JS sets it via CSSOM (an inline style= attribute is blocked by our CSP) */
 .experience { position: relative; min-height: 100svh; padding-bottom: 28px; }
 
 /* entrance choreography */
@@ -130,7 +131,8 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
 .board-track {
   display: flex; gap: 0; white-space: nowrap; padding-left: 0;
   /* 54% of the board's own height — fills the panel at every screen size */
-  font-size: clamp(7px, 54cqh, 34px); letter-spacing: .09em; line-height: 1;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(9px, 72cqh, 44px); letter-spacing: .07em; line-height: 1;
   color: var(--amber); font-variant-numeric: tabular-nums;
   animation: boardScroll 42s linear infinite; will-change: transform;
 }

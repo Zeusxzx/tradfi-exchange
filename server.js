@@ -30,7 +30,9 @@ const mimeTypes = {
   '.jpeg': 'image/jpeg',
   '.ico': 'image/x-icon',
   '.mp4': 'video/mp4',
-  '.webm': 'video/webm'
+  '.webm': 'video/webm',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff'
 };
 
 function easternParts(date) {
@@ -171,7 +173,7 @@ function serveStatic(requestPath, response, headers) {
       // deploy. Media (large, rarely-changed) keeps a longer cache.
       'Cache-Control': contentType.startsWith('video/') ? 'public, max-age=3600' : 'no-cache',
       'X-Content-Type-Options': 'nosniff',
-      'Content-Security-Policy': "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com https://rpc.testnet.chain.robinhood.com; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+      'Content-Security-Policy': "default-src 'self'; style-src 'self'; font-src 'self'; script-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com https://rpc.testnet.chain.robinhood.com; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     };
 
     // Video needs HTTP range support: Safari/iOS refuses to play <video> sources

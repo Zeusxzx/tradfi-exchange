@@ -1328,3 +1328,16 @@ html, body { background: var(--pw); }
   .how-rail { padding-left: clamp(200px, 20vw, 330px); }
   .how-rail::before { left: calc(clamp(200px, 20vw, 330px) + 19px); }
 }
+
+/* he stands beside the rail, not over it: smaller, further left, and the
+   numbers thread straight down the cap-line of the headings */
+.mascot-rail {
+  left: clamp(-26px, -1.4vw, 0px); right: auto; bottom: 0;
+  width: auto; height: clamp(190px, 20vw, 300px);
+  max-width: 22vw; object-fit: contain; object-position: bottom left;
+}
+@media (min-width: 1081px) {
+  .how-rail { padding-left: clamp(132px, 12.5vw, 208px); }
+  .how-rail::before { left: calc(clamp(132px, 12.5vw, 208px) + 19px); }
+  .how-rail .how-n { margin-top: 7px; }
+}

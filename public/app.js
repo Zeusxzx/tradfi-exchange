@@ -2,7 +2,7 @@ const experience = document.querySelector('#experience');
 const viewButtons = [...document.querySelectorAll('[data-view-button]')];
 const personTargets = [...document.querySelectorAll('[data-person]')];
 const personCard = document.querySelector('#personCard');
-const personHotspots = document.querySelector('.person-hotspots');
+const personHotspots = document.querySelector('.person-hotspots'); // removed from the landing page; guarded below
 const tradeDrawer = document.querySelector('#tradeDrawer');
 const drawerScrim = document.querySelector('#drawerScrim');
 const walletButton = document.querySelector('#walletButton');
@@ -176,8 +176,10 @@ function renderView() {
   experience.style.setProperty('--night-mix', getNightMix().toFixed(3));
   viewButtons.forEach((button) => button.classList.toggle('active', button.dataset.viewButton === activeView));
   const state = visibleState();
-  personHotspots.classList.toggle('state-open', state === 'open');
-  personHotspots.classList.toggle('state-closed', state !== 'open');
+  if (personHotspots) {
+    personHotspots.classList.toggle('state-open', state === 'open');
+    personHotspots.classList.toggle('state-closed', state !== 'open');
+  }
   const viewLabel = document.querySelector('#viewLabel');
   if (viewLabel) viewLabel.textContent = activeView === 'live'
     ? 'Live'
@@ -421,7 +423,7 @@ schedulePlane();
   if (!stage || !space) return;
 
   // the people belong in video space too, not stage space
-  if (spots && spots.parentElement !== space) space.appendChild(spots);
+  if (spots && spots.parentElement !== space) space.appendChild(spots); // no-op once removed
 
   function sizeSpace() {
     const w = stage.clientWidth, h = stage.clientHeight;
@@ -519,8 +521,8 @@ schedulePlane();
    repeated until it fills the container, and travel exactly one unit. */
 (function marquees() {
   const RIGS = [
-    { track: '#tickerTrack',    unit: 'ticker-unit', pxPerSec: 62, min: 24 },
-    { track: '[data-board-track]', unit: 'board-unit',  pxPerSec: 46, min: 20 }
+    { track: '#tickerTrack',    unit: 'ticker-unit', pxPerSec: 95, min: 14 },
+    { track: '[data-board-track]', unit: 'board-unit',  pxPerSec: 115, min: 10 }
   ];
 
   function rebuild(track, unitClass, pxPerSec, min) {

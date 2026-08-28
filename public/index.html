@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;600;700;800&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="preload" as="image" href="/assets/exchange-tower-v2.jpg" />
-    <link rel="preload" as="image" href="/assets/exchange-tower-night-v3.jpg" />
+    <link rel="preload" as="image" href="/assets/exchange-tower-night-v4.jpg" />
     <link rel="stylesheet" href="/styles.css?v=4" />
     <script src="/app.js?v=4" defer></script>
   </head>
@@ -53,9 +53,9 @@
             <source src="/assets/exchange-tower-v2.webm" type="video/webm" />
             <source src="/assets/exchange-tower-v2.mp4" type="video/mp4" />
           </video>
-          <video class="scene-plane scene-night" id="videoNight" muted loop playsinline autoplay preload="metadata" poster="/assets/exchange-tower-night-v3.jpg" aria-hidden="true">
-            <source src="/assets/exchange-tower-night-v3.webm" type="video/webm" />
-            <source src="/assets/exchange-tower-night-v3.mp4" type="video/mp4" />
+          <video class="scene-plane scene-night" id="videoNight" muted loop playsinline autoplay preload="metadata" poster="/assets/exchange-tower-night-v4.jpg" aria-hidden="true">
+            <source src="/assets/exchange-tower-night-v4.webm" type="video/webm" />
+            <source src="/assets/exchange-tower-night-v4.mp4" type="video/mp4" />
           </video>
           <div class="video-space" id="videoSpace" aria-hidden="true">
             <div class="board-tape board-day"><div class="board-track" data-board-track></div></div>
@@ -66,13 +66,6 @@
           <div class="scene-vignette" aria-hidden="true"></div>
           <div class="grain" aria-hidden="true"></div>
 
-          <div class="person-hotspots" aria-label="People inside the exchange">
-            <button class="person-hotspot hotspot-ivy open-person" data-person="ivy" type="button" aria-label="Meet Ivy on the trading floor"><span>Ivy</span></button>
-            <button class="person-hotspot hotspot-omar open-person" data-person="omar" type="button" aria-label="Meet Omar on the trading floor"><span>Omar</span></button>
-            <button class="person-hotspot hotspot-leo open-person" data-person="leo" type="button" aria-label="Meet Leo on the trading floor"><span>Leo</span></button>
-            <button class="person-hotspot hotspot-mo night-person" data-person="mo" type="button" aria-label="Meet Mo on the night shift"><span>Mo</span></button>
-            <button class="person-hotspot hotspot-sasha night-person" data-person="sasha" type="button" aria-label="Meet Sasha in the lobby"><span>Sasha</span></button>
-          </div>
 
 
           <h1 class="frame-title" id="heroTitle"><span id="heroLineOne">OFF THE</span> <span id="heroLineTwo">CLOCK.</span></h1>
@@ -99,12 +92,13 @@
 
       <section class="gate" aria-labelledby="gateTitle">
         <div class="gate-head">
-          <span class="eyebrow">The gate</span>
-          <h2 id="gateTitle">The market closes the contract, not the website.</h2>
-          <p>A Uniswap v4 hook calls <code>MarketCalendar.isMarketOpen()</code> in
-            <code>beforeSwap</code>. Outside 09:30–16:00 ET the swap reverts with
-            <code>MarketClosed(nextOpen)</code> — there is no path around it, and closing
-            this tab does not open the market. Liquidity operations are never gated.</p>
+          <span class="eyebrow">Banker’s hours</span>
+          <h2 id="gateTitle">You can only trade it while the market is open.</h2>
+          <p>09:30–16:00 ET, Monday to Friday. Closed on NYSE holidays, 13:00 on half
+            days. Outside those hours every swap reverts with
+            <code>MarketClosed(nextOpen)</code> — a Uniswap v4 hook checks
+            <code>MarketCalendar.isMarketOpen()</code> before it will let a trade
+            through. Liquidity operations are never gated.</p>
         </div>
         <div class="gate-live">
           <div class="gate-read">

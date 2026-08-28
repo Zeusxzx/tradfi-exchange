@@ -572,3 +572,32 @@ schedulePlane();
   let t;
   window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(run, 180); });
 })();
+
+
+/* ---- preview toggle ------------------------------------------------------
+   Cycles live → open → closed and repaints everything that depends on state:
+   which building is showing, which board, the headline, the hotspot cast. */
+(function stateToggle() {
+  const btn = document.querySelector('#stateToggle');
+  const label = document.querySelector('#stateToggleLabel');
+  if (!btn || !label) return;
+
+  const ORDER = ['live', 'open', 'closed'];
+  const TEXT = { live: 'Live', open: 'Market open', closed: 'After hours' };
+
+  function show() {
+    btn.dataset.state = activeView;
+    label.textContent = TEXT[activeView];
+    btn.setAttribute('title', activeView === 'live'
+      ? 'Following the on-chain calendar'
+      : 'Previewing ' + TEXT[activeView].toLowerCase() + ' — click to cycle');
+  }
+
+  btn.addEventListener('click', () => {
+    activeView = ORDER[(ORDER.indexOf(activeView) + 1) % ORDER.length];
+    renderView();
+    show();
+  });
+
+  show();
+})();

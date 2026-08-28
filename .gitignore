@@ -5,5 +5,8 @@ coverage/
 playwright-report/
 test-results/
 public/assets/*.png
-public/assets/*-v3.mp4
+# these two are abandoned drafts, not a pattern. The old wildcard was
+# public/assets/*-v3.mp4, which silently swallowed any future -v3 asset.
+public/assets/exchange-day-v3.mp4
+public/assets/exchange-night-v3.mp4
 public/assets/exchange-day-motion-v2.jpg

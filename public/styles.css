@@ -490,3 +490,20 @@ video.scene-plane {
   font-size: clamp(20px, 2.1vw, 30px); text-transform: uppercase;
 }
 .wordmark-sub { font-family: var(--data); font-size: 9.5px; letter-spacing: .11em; color: var(--muted); }
+
+
+/* Preview toggle — cycles Live → Market open → After hours. Lets the open
+   state be checked at 4am without shipping the old four-tab nav back. */
+.state-toggle {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: 4px; background: rgba(8,9,11,.55);
+  backdrop-filter: blur(8px); color: var(--paper); cursor: pointer;
+  font-family: var(--data); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  transition: border-color .18s, background .18s;
+}
+.state-toggle:hover { border-color: var(--paper); background: rgba(8,9,11,.75); }
+.state-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background .3s; }
+.state-toggle[data-state="open"]   .state-dot { background: var(--up); box-shadow: 0 0 10px currentColor; }
+.state-toggle[data-state="closed"] .state-dot { background: var(--down); box-shadow: 0 0 10px currentColor; }
+.state-toggle[data-state="live"]   .state-dot { background: var(--paper); }
+@media (max-width: 720px) { .state-toggle span:last-child { display: none; } .state-toggle { padding: 0 12px; } }

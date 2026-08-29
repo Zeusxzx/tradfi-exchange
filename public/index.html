@@ -116,9 +116,46 @@
             </aside>
           </div>
 
+          <button class="bullpen-enter" id="bullpenEnter" type="button">
+            <span class="bullpen-enter-dot" aria-hidden="true"></span>
+            <span class="bullpen-enter-text">
+              <span class="bullpen-enter-k">Enter the bullpen</span>
+              <span class="bullpen-enter-s" id="bullpenEnterSub">Look inside the floor</span>
+            </span>
+            <span class="bullpen-enter-arrow" aria-hidden="true">&#8599;</span>
+          </button>
+
           <div class="ticker-tape" aria-hidden="true">
         <div class="ticker-track" id="tickerTrack"></div>
       </div>
+      </section>
+
+      <!-- The floor behind those lit windows. Not a separate page: the zoom has
+           to be continuous, so this is an overlay that takes over the viewport
+           while the stage scales into the glass underneath it. -->
+      <section class="bullpen" id="bullpen" aria-label="Inside the trading floor" hidden>
+        <div class="bullpen-plane bullpen-day">
+          <video class="bullpen-layer is-live" muted playsinline loop preload="none" poster="/assets/bullpen-day.jpg"></video>
+        </div>
+        <div class="bullpen-plane bullpen-night">
+          <video class="bullpen-layer is-live" muted playsinline loop preload="none" poster="/assets/bullpen-night.jpg"></video>
+        </div>
+        <div class="bullpen-vignette" aria-hidden="true"></div>
+        <div class="bullpen-grain grain" aria-hidden="true"></div>
+
+        <div class="bullpen-hud">
+          <span class="bullpen-tag" id="bullpenTag">The floor</span>
+          <h2 class="bullpen-title" id="bullpenTitle">Nobody is here.</h2>
+          <p class="bullpen-copy" id="bullpenCopy">The desks are cold until 9:30.</p>
+          <dl class="bullpen-stats">
+            <div><dt id="bullpenClockLabel">Opens in</dt><dd id="bullpenClock">--:--:--</dd></div>
+            <div><dt>New York</dt><dd id="bullpenNY">--:--:-- ET</dd></div>
+          </dl>
+        </div>
+
+        <button class="bullpen-exit" id="bullpenExit" type="button">
+          <span aria-hidden="true">&#8592;</span> Back to the street
+        </button>
       </section>
 
       <div class="paper">

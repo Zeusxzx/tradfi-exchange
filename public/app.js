@@ -1090,3 +1090,89 @@ schedulePlane();
 
   show();
 })();
+
+/* ---- enter the bullpen ----------------------------------------------------
+   Not a route change: a page load would kill the zoom, and the whole point is
+   that the camera never cuts. The stage scales into the lit window band while
+   its overlays drop away, and the interior overlay is already opaque before
+   the scale finishes -- so the stage can be reset behind it with nothing on
+   screen to give it away. The hash is pushed so Back leaves the floor.       */
+(function bullpen() {
+  const view    = document.querySelector('#bullpen');
+  const enter   = document.querySelector('#bullpenEnter');
+  const exit    = document.querySelector('#bullpenExit');
+  if (!view || !enter || !exit) return;
+
+  const enterSub = document.querySelector('#bullpenEnterSub');
+  const tag   = document.querySelector('#bullpenTag');
+  const title = document.querySelector('#bullpenTitle');
+  const copy  = document.querySelector('#bullpenCopy');
+  const clockLabel = document.querySelector('#bullpenClockLabel');
+  const clock = document.querySelector('#bullpenClock');
+  const nyTime = document.querySelector('#bullpenNY');
+
+  const ZOOM_MS = 1150;   // matches the scale transition in the stylesheet
+  const HANDOFF = 620;    // the overlay starts coming up before the zoom ends
+  let open = false, busy = null;
+
+  function copyFor() {
+    const isOpen = visibleState() === 'open';
+    if (enterSub) enterSub.textContent = isOpen ? 'The floor is running' : 'The floor is dark';
+    if (!open) return;
+    tag.textContent   = isOpen ? 'The floor · open' : 'The floor · closed';
+    title.textContent = isOpen ? 'Everybody is here.' : 'Nobody is here.';
+    copy.textContent  = isOpen
+      ? 'Every desk manned, every line lit. Until 4:00 the contract lets the trade through.'
+      : 'Lights out, screens dead, chairs pushed in. The contract refuses the trade until 9:30.';
+    if (clockLabel) clockLabel.textContent = isOpen ? 'Closes in' : 'Opens in';
+  }
+
+  /* the floor clock mirrors the hero clock rather than keeping its own timer */
+  function tick() {
+    if (!open) return;
+    const t = document.querySelector('#hudTime');
+    const n = document.querySelector('#newYorkTime');
+    if (t && clock) clock.textContent = t.textContent;
+    if (n && nyTime) nyTime.textContent = n.textContent;
+  }
+  setInterval(tick, 500);
+
+  function go() {
+    if (open || busy) return;
+    open = true;
+    experience.dataset.zoom = 'in';
+    view.hidden = false;
+    copyFor(); tick();
+    // The overlay must not start crossfading while the building is still small
+    // or the two shots read as a dissolve instead of one continuous push. It
+    // comes up at HANDOFF and finishes opaque exactly as the scale lands.
+    setTimeout(() => { if (open) document.documentElement.dataset.bullpen = 'open'; }, HANDOFF);
+    busy = setTimeout(() => {
+      // the overlay is fully opaque by now, so resetting the stage is invisible
+      delete experience.dataset.zoom;
+      busy = null;
+    }, ZOOM_MS + 220);
+    if (location.hash !== '#bullpen') history.pushState({ bullpen: 1 }, '', '#bullpen');
+  }
+
+  function leave(pop) {
+    if (!open) return;
+    open = false;
+    if (busy) { clearTimeout(busy); busy = null; }
+    delete document.documentElement.dataset.bullpen;
+    experience.dataset.zoom = 'out';
+    setTimeout(() => { view.hidden = true; delete experience.dataset.zoom; }, 640);
+    if (!pop && location.hash === '#bullpen') history.back();
+  }
+
+  enter.addEventListener('click', go);
+  exit.addEventListener('click', () => leave(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) leave(false); });
+  window.addEventListener('popstate', () => { if (location.hash !== '#bullpen') leave(true); else go(); });
+  if (location.hash === '#bullpen') setTimeout(go, 60);
+
+  // the button subtitle has to follow whichever state is being shown, live or
+  // previewed, so it is repainted on the same cadence as the rest of the page
+  setInterval(copyFor, 1000);
+  copyFor();
+})();

@@ -238,6 +238,9 @@ function syncVideoPlayback() {
 // forever -- which, since the poster is a static shot, looks identical to
 // the old flat-image design even though the new build is fully deployed.
 setInterval(() => {
+  // while the bullpen overlay is up the stage is invisible and deliberately
+  // parked, so the watchdog must not wake it back up behind the overlay
+  if (document.documentElement.dataset.bullpen === 'open') return;
   const mix = getNightMix();
   if (mix < 1) sceneDay.play();
   if (mix > 0) sceneNight.play();
@@ -1115,6 +1118,23 @@ schedulePlane();
   const HANDOFF = 620;    // the overlay starts coming up before the zoom ends
   let open = false, busy = null;
 
+  /* The interior is two 720p loops. They are not built until somebody shows
+     intent, so a visitor who never presses the button never pays for them;
+     hovering the marker is enough intent to start the download, which is what
+     makes the press feel instant. Same A/B rig as the tower, so the loop
+     point costs no dropped frame. */
+  let scenes = null;
+  function ensureScenes() {
+    if (scenes) return scenes;
+    const d = document.querySelector('#bullpenDay');
+    const n = document.querySelector('#bullpenNight');
+    if (!d || !n) return null;
+    [...d.querySelectorAll('video'), ...n.querySelectorAll('video')]
+      .forEach((v) => { v.preload = 'auto'; });
+    scenes = { day: sceneLoop(d), night: sceneLoop(n) };
+    return scenes;
+  }
+
   function copyFor() {
     const isOpen = visibleState() === 'open';
     if (enterSub) enterSub.textContent = isOpen ? 'The floor is running' : 'The floor is dark';
@@ -1143,6 +1163,10 @@ schedulePlane();
     experience.dataset.zoom = 'in';
     view.hidden = false;
     copyFor(); tick();
+    const sc = ensureScenes();
+    if (sc) { sc.day.play(); sc.night.play(); }
+    // nothing on the stage is visible from in here; four decoders is enough
+    sceneDay.pause(); sceneNight.pause();
     // The overlay must not start crossfading while the building is still small
     // or the two shots read as a dissolve instead of one continuous push. It
     // comes up at HANDOFF and finishes opaque exactly as the scale lands.
@@ -1160,12 +1184,16 @@ schedulePlane();
     open = false;
     if (busy) { clearTimeout(busy); busy = null; }
     delete document.documentElement.dataset.bullpen;
+    if (scenes) { scenes.day.pause(); scenes.night.pause(); }
+    syncVideoPlayback();
     experience.dataset.zoom = 'out';
     setTimeout(() => { view.hidden = true; delete experience.dataset.zoom; }, 640);
     if (!pop && location.hash === '#bullpen') history.back();
   }
 
   enter.addEventListener('click', go);
+  enter.addEventListener('pointerenter', ensureScenes, { once: true });
+  enter.addEventListener('focus', ensureScenes, { once: true });
   exit.addEventListener('click', () => leave(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) leave(false); });
   window.addEventListener('popstate', () => { if (location.hash !== '#bullpen') leave(true); else go(); });

@@ -81,6 +81,15 @@
           <div class="video-space" id="videoSpace" aria-hidden="true">
             <div class="board-tape board-day"><div class="board-track" data-board-track></div></div>
             <div class="board-tape board-night"><div class="board-track" data-board-track></div></div>
+            <!-- welded to the third lit floor of the tower, so it reads as a way
+                 into that floor rather than a control bolted onto the page -->
+            <button class="bullpen-enter" id="bullpenEnter" type="button" aria-hidden="false">
+              <span class="bullpen-enter-dot" aria-hidden="true"></span>
+              <span class="bullpen-enter-text">
+                <span class="bullpen-enter-k">Enter the bullpen</span>
+                <span class="bullpen-enter-s" id="bullpenEnterSub">Look inside the floor</span>
+              </span>
+            </button>
           </div>
           <div class="atmosphere atmosphere-day" aria-hidden="true"></div>
           <div class="atmosphere atmosphere-night" aria-hidden="true"></div>
@@ -116,15 +125,6 @@
             </aside>
           </div>
 
-          <button class="bullpen-enter" id="bullpenEnter" type="button">
-            <span class="bullpen-enter-dot" aria-hidden="true"></span>
-            <span class="bullpen-enter-text">
-              <span class="bullpen-enter-k">Enter the bullpen</span>
-              <span class="bullpen-enter-s" id="bullpenEnterSub">Look inside the floor</span>
-            </span>
-            <span class="bullpen-enter-arrow" aria-hidden="true">&#8599;</span>
-          </button>
-
           <div class="ticker-tape" aria-hidden="true">
         <div class="ticker-track" id="tickerTrack"></div>
       </div>
@@ -134,11 +134,25 @@
            to be continuous, so this is an overlay that takes over the viewport
            while the stage scales into the glass underneath it. -->
       <section class="bullpen" id="bullpen" aria-label="Inside the trading floor" hidden>
-        <div class="bullpen-plane bullpen-day">
-          <video class="bullpen-layer is-live" muted playsinline loop preload="none" poster="/assets/bullpen-day.jpg"></video>
+        <div class="scene-plane bullpen-plane bullpen-day" id="bullpenDay">
+            <video class="scene-layer is-live" muted playsinline preload="none" poster="/assets/bullpen-day-v1.jpg">
+              <source src="/assets/bullpen-day-v1.webm" type="video/webm" />
+              <source src="/assets/bullpen-day-v1.mp4" type="video/mp4" />
+            </video>
+            <video class="scene-layer" muted playsinline preload="none">
+              <source src="/assets/bullpen-day-v1.webm" type="video/webm" />
+              <source src="/assets/bullpen-day-v1.mp4" type="video/mp4" />
+            </video>
         </div>
-        <div class="bullpen-plane bullpen-night">
-          <video class="bullpen-layer is-live" muted playsinline loop preload="none" poster="/assets/bullpen-night.jpg"></video>
+        <div class="scene-plane bullpen-plane bullpen-night" id="bullpenNight">
+            <video class="scene-layer is-live" muted playsinline preload="none" poster="/assets/bullpen-night-v1.jpg">
+              <source src="/assets/bullpen-night-v1.webm" type="video/webm" />
+              <source src="/assets/bullpen-night-v1.mp4" type="video/mp4" />
+            </video>
+            <video class="scene-layer" muted playsinline preload="none">
+              <source src="/assets/bullpen-night-v1.webm" type="video/webm" />
+              <source src="/assets/bullpen-night-v1.mp4" type="video/mp4" />
+            </video>
         </div>
         <div class="bullpen-vignette" aria-hidden="true"></div>
         <div class="bullpen-grain grain" aria-hidden="true"></div>

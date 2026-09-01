@@ -81,6 +81,79 @@ function findNextOpen(fromDate) {
   return null;
 }
 
+/* ---- the contract is the clock -------------------------------------------
+   The hook on the pool decides whether a swap goes through, and it decides by
+   asking MarketCalendar. So the site must ask the same contract, not a copy of
+   its calendar transcribed into JavaScript -- two calendars agree right up
+   until the day they don't, and the failure looks like the site saying OPEN
+   while every trade reverts.
+
+   The chain answer is cached briefly and refreshed in the background: one RPC
+   read serves every visitor, instead of every browser hitting the RPC itself.
+   The local NYSE table stays as the fallback for when the RPC is unreachable,
+   and as the source of the labels the contract does not carry (pre-market,
+   early close, "9:30 AM-4:00 PM ET"). */
+const CALENDAR = {
+  address: process.env.MARKET_CALENDAR_ADDRESS || '0xdC9A372eFaB73F3D45E01ECE286d6be614a5E693',
+  rpcUrl: process.env.MARKET_CALENDAR_RPC_URL || 'https://rpc.testnet.chain.robinhood.com',
+  isMarketOpen: '0xd4ce85f3',
+  nextOpen: '0x564be63f',
+  ttlMs: 30_000
+};
+
+let calendarCache = { at: 0, isOpen: null, nextOpenEpoch: null, error: null };
+let calendarInFlight = null;
+
+async function ethCall(data) {
+  const body = JSON.stringify({
+    jsonrpc: '2.0', id: 1, method: 'eth_call',
+    params: [{ to: CALENDAR.address, data }, 'latest']
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetch(CALENDAR.rpcUrl, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body, signal: controller.signal
+    });
+    if (!res.ok) throw new Error('rpc ' + res.status);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message || 'rpc error');
+    return json.result;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function padHex32(value) {
+  return value.toString(16).padStart(64, '0');
+}
+
+async function refreshCalendar(now = new Date()) {
+  const nowSeconds = Math.floor(now.getTime() / 1000);
+  try {
+    const [openRaw, nextRaw] = await Promise.all([
+      ethCall(CALENDAR.isMarketOpen),
+      ethCall(CALENDAR.nextOpen + padHex32(nowSeconds))
+    ]);
+    const isOpen = BigInt(openRaw) === 1n;
+    const nextOpenEpoch = Number(BigInt(nextRaw));
+    calendarCache = { at: Date.now(), isOpen, nextOpenEpoch, error: null };
+  } catch (error) {
+    // keep the last good answer, but remember why the refresh failed
+    calendarCache = { ...calendarCache, at: Date.now(), error: error.message };
+  }
+  return calendarCache;
+}
+
+function calendarSnapshot() {
+  const stale = Date.now() - calendarCache.at > CALENDAR.ttlMs;
+  if (stale && !calendarInFlight) {
+    calendarInFlight = refreshCalendar().finally(() => { calendarInFlight = null; });
+  }
+  return calendarCache;
+}
+
 function getMarketStatus(now = new Date()) {
   const parts = easternParts(now);
   const currentMinutes = sessionMinutes(parts);
@@ -98,19 +171,40 @@ function getMarketStatus(now = new Date()) {
     reason = NYSE_EARLY_CLOSES.has(parts.dateKey) ? 'Early close' : 'After hours';
   }
 
+  // The contract wins whenever it has answered. The local table only names the
+  // state; it does not get to decide it.
+  const chain = calendarSnapshot();
+  const chainKnows = chain.isOpen !== null;
+  const openNow = chainKnows ? chain.isOpen : isOpen;
+  if (chainKnows && chain.isOpen !== isOpen) {
+    // the two disagree -- say so out loud rather than picking silently
+    reason = chain.isOpen ? 'Market open' : 'Closed on-chain';
+  }
+
   return {
-    isOpen,
-    state: isOpen ? 'open' : 'closed',
+    isOpen: openNow,
+    state: openNow ? 'open' : 'closed',
+    source: chainKnows ? 'contract' : 'fallback',
+    calendarAddress: CALENDAR.address,
+    calendarError: chain.error,
     reason,
     timeZone: NYSE_TIME_ZONE,
     coreHours: NYSE_EARLY_CLOSES.has(parts.dateKey) ? '9:30 AM–1:00 PM ET' : '9:30 AM–4:00 PM ET',
     easternDate: parts.dateKey,
     earlyClose: NYSE_EARLY_CLOSES.has(parts.dateKey),
     checkedAt: now.toISOString(),
-    nextOpenAt: isOpen ? null : findNextOpen(now),
+    nextOpenAt: openNow ? null : (
+      // nextOpen(now) from the contract, in epoch seconds; it returns `now`
+      // itself while the market is open, which is why it is only used here
+      chainKnows && chain.nextOpenEpoch && chain.nextOpenEpoch > Math.floor(now.getTime() / 1000)
+        ? new Date(chain.nextOpenEpoch * 1000).toISOString()
+        : findNextOpen(now)
+    ),
     // while the session is live the useful number is how long is left in it,
     // not when it next opens -- the panel counts down to the closing bell
-    closesInSeconds: isOpen ? Math.round((closesAt - currentMinutes) * 60) : null
+    // the contract says whether it is open, not when it shuts; the closing bell
+    // is 16:00 ET (13:00 on a half day), which the local table does carry
+    closesInSeconds: openNow ? Math.round((closesAt - currentMinutes) * 60) : null
   };
 }
 

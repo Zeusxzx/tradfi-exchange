@@ -347,21 +347,15 @@ async function rpcCall(rpcUrl, to, data) {
   return json.result;
 }
 
-async function verifyOnChain() {
-  if (!publicConfig?.marketCalendar) return;
-  const { address, rpcUrl, isMarketOpenSelector, nextOpenSelector, network } = publicConfig.marketCalendar;
-  try {
-    const openResult = await rpcCall(rpcUrl, address, isMarketOpenSelector);
-    const isOpenOnChain = BigInt(openResult) === 1n;
-    const nowHex = '0x' + Math.floor(Date.now() / 1000).toString(16);
-    const nextResult = await rpcCall(rpcUrl, address, nextOpenSelector + padHex32(nowHex));
-    const nextOpenEpoch = Number(BigInt(nextResult));
-    void nextOpenEpoch; void isOpenOnChain;
-    if (chainProofLink) chainProofLink.href = `https://robinhoodchain.blockscout.com/address/${address}`;
-    void network;
-  } catch (error) {
-    /* the chain read is corroboration, not the source of what the page shows;
-       if it fails the server's own calendar still drives everything */
+/* The server now reads MarketCalendar itself and every visitor is served that
+   same cached answer, so the browser no longer duplicates the call -- one read
+   for the whole site instead of one per visitor, which is what keeps a public
+   RPC usable when a lot of people arrive at once. All that is left here is
+   pointing the proof link at the contract the answer came from. */
+function verifyOnChain() {
+  const address = publicConfig?.marketCalendar?.address;
+  if (address && chainProofLink) {
+    chainProofLink.href = `https://robinhoodchain.blockscout.com/address/${address}`;
   }
 }
 

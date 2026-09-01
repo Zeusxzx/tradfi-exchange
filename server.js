@@ -377,7 +377,9 @@ function sendJson(response, statusCode, value) {
 }
 
 function serveStatic(requestPath, response, headers) {
-  const normalizedPath = requestPath === '/' ? '/index.html' : requestPath;
+  // a directory request ('/', '/v2/') means that directory's index.html;
+  // without this a folder resolves to a directory stat and 500s
+  const normalizedPath = requestPath.endsWith('/') ? requestPath + 'index.html' : requestPath;
   const filePath = path.resolve(PUBLIC_DIR, `.${normalizedPath}`);
   if (!filePath.startsWith(PUBLIC_DIR)) {
     sendJson(response, 403, { error: 'Forbidden' });

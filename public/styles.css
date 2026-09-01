@@ -1575,7 +1575,7 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 
 /* the stats become a quiet strip, not a boxed grid */
 .hud-stats {
-  display: grid !important; grid-template-columns: repeat(4, 1fr) !important;
+  display: grid !important; grid-template-columns: repeat(2, 1fr) !important;
   gap: 0 !important; margin: 0 !important;
   background: rgba(10,13,18,.5) !important;
   border: 1px solid rgba(255,255,255,.1) !important;
@@ -1583,18 +1583,26 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 .hud-stats > div {
-  padding: 9px 10px !important; background: none !important;
+  padding: 9px 12px !important; background: none !important;
   border-left: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid rgba(255,255,255,.08);
+  min-width: 0;
 }
-.hud-stats > div:first-child { border-left: 0; }
-.hud-stats dt { font-size: 8px !important; letter-spacing: .11em !important; }
-.hud-stats dd { font-size: 12.5px !important; margin-top: 3px !important; }
+.hud-stats > div:nth-child(odd) { border-left: 0; }
+.hud-stats > div:nth-child(-n+2) { border-top: 0; }
+.hud-stats dt {
+  font-size: 8px !important; letter-spacing: .11em !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hud-stats dd {
+  font-size: 12.5px !important; margin-top: 3px !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
 
 @media (max-width: 900px) {
   .hud { align-items: stretch !important; gap: 16px; }
   .hud-clock { max-width: none; }
   .hud-right { width: auto; }
   .hud-time { font-size: clamp(40px, 13vw, 64px) !important; }
-  .hud-stats { grid-template-columns: repeat(2, 1fr) !important; }
-  .hud-stats > div:nth-child(3) { border-left: 0; }
 }

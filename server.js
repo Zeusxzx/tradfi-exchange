@@ -98,7 +98,8 @@ const CALENDAR = {
   rpcUrl: process.env.MARKET_CALENDAR_RPC_URL || 'https://rpc.testnet.chain.robinhood.com',
   isMarketOpen: '0xd4ce85f3',
   nextOpen: '0x564be63f',
-  ttlMs: 30_000
+  ttlMs: 10_000,      // normal cadence
+  ttlNearBellMs: 2_000 // within two minutes of an open or a close
 };
 
 let calendarCache = { at: 0, isOpen: null, nextOpenEpoch: null, error: null };
@@ -146,13 +147,30 @@ async function refreshCalendar(now = new Date()) {
   return calendarCache;
 }
 
+/* Seconds until the next opening or closing bell, by the local table. Only
+   used to decide how hard to poll -- the contract still decides the answer. */
+function secondsToBell(now = new Date()) {
+  const parts = easternParts(now);
+  const minutes = sessionMinutes(parts);
+  const opensAt = 9 * 60 + 30;
+  const closesAt = NYSE_EARLY_CLOSES.has(parts.dateKey) ? 13 * 60 : 16 * 60;
+  return Math.min(Math.abs(minutes - opensAt), Math.abs(minutes - closesAt)) * 60;
+}
+
 function calendarSnapshot() {
-  const stale = Date.now() - calendarCache.at > CALENDAR.ttlMs;
+  // The whole site is about one instant. Two minutes either side of a bell the
+  // contract is re-read every couple of seconds so the flip lands on time; the
+  // rest of the day a slower cadence is plenty and keeps the RPC quiet.
+  const ttl = secondsToBell() < 120 ? CALENDAR.ttlNearBellMs : CALENDAR.ttlMs;
+  const stale = Date.now() - calendarCache.at > ttl;
   if (stale && !calendarInFlight) {
     calendarInFlight = refreshCalendar().finally(() => { calendarInFlight = null; });
   }
   return calendarCache;
 }
+
+// keep the cache warm in the background so a visitor is never the one waiting
+setInterval(() => { calendarSnapshot(); }, 2_000).unref?.();
 
 function getMarketStatus(now = new Date()) {
   const parts = easternParts(now);

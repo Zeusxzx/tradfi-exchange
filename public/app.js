@@ -22,6 +22,7 @@ const videoNight = document.querySelector('#videoNight');
 const chainProofLink = document.querySelector('#chainProofLink');
 let closesAtEpoch = null;
 let lastPrints = [];
+let bellWatch = null;
 
 const people = {
   ivy: { number: 'EMPLOYEE 001', name: 'Ivy Mercado', role: 'Head trader · night DJ', open: 'Ivy moves between the center desk and the glass wall all day, reading the room faster than the screens. At the bell, she leaves the floor for a booth downtown.', closed: 'Ivy clocked out at the bell. She is across town turning the closing candles into the first track of the night.', openLocation: 'THIRD FLOOR · EQUITIES', closedLocation: 'OFF DUTY · LOWER EAST SIDE' },
@@ -306,6 +307,21 @@ function updateClock() {
     ? `${days}D ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
     : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   if (hudTime) hudTime.textContent = label;
+
+  // The countdown reaching zero is the whole point of the site. Do not wait for
+  // the next 60-second poll to find out the bell rang -- ask immediately, and
+  // keep asking every two seconds until the state actually flips.
+  if (total <= 0 && !bellWatch) {
+    bellWatch = setInterval(() => {
+      const was = marketStatus && marketStatus.isOpen;
+      loadRuntime().then(() => {
+        if (marketStatus && marketStatus.isOpen !== was) {
+          clearInterval(bellWatch); bellWatch = null;
+        }
+      });
+    }, 2000);
+    loadRuntime();
+  }
 }
 
 function updateTrade() {

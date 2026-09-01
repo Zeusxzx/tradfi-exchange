@@ -511,7 +511,11 @@ code { font-family: var(--data); font-size: .92em; color: var(--paper); backgrou
   display: flex; justify-content: space-between; align-items: flex-end; gap: 24px;
   padding: 0 clamp(18px, 4vw, 64px); pointer-events: none;
 }
-.hud > * { pointer-events: auto; }
+/* the hud is a full-bleed grid, so only the panels themselves may take a
+   click -- otherwise hero-inner lays an invisible 1240x619 sheet over the
+   building and the bullpen pin underneath it stops responding */
+.hud, .hud .hero-inner, .hud .clock-wrap, .hud .hero-sub { pointer-events: none; }
+.hud .hero-card, .hud .hero-stats, .hud .btn, .hud .chip { pointer-events: auto; }
 
 /* the glass both panels are cut from */
 .hud-clock, .hud-card {
@@ -1558,14 +1562,18 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 }
 /* the scrim rides with everything else welded to the street */
 .experience[data-zoom="in"] .stage::after { opacity: 0; transition: opacity 420ms ease; }
-.hud > * { pointer-events: auto; }
+/* the hud is a full-bleed grid, so only the panels themselves may take a
+   click -- otherwise hero-inner lays an invisible 1240x619 sheet over the
+   building and the bullpen pin underneath it stops responding */
+.hud, .hud .hero-inner, .hud .clock-wrap, .hud .hero-sub { pointer-events: none; }
+.hud .hero-card, .hud .hero-stats, .hud .btn, .hud .chip { pointer-events: auto; }
 
 .hero-inner {
   /* v2's padding, plus the height of the ticker strip that v2 doesn't have
      welded to the bottom of its hero */
   width: var(--shell); padding-block: var(--s16) calc(var(--s12) + 44px);
   display: grid; gap: var(--s10);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
   align-items: end;
 }
 
@@ -1625,34 +1633,38 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 .hero-sub { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
 
 /* --- right: the card, then the stats under it ----------------------------- */
-.hero-right { display: grid; gap: var(--s3); }
+.hero-right { display: grid; gap: var(--s2); }
 .hero-card {
-  padding: var(--s5); display: grid; gap: var(--s4);
-  background: color-mix(in oklab, var(--g2) 72%, transparent);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  padding: var(--s4); display: grid; gap: var(--s3);
+  background: color-mix(in oklab, var(--g2) 46%, transparent);
+  border-color: rgba(255,255,255,.09);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 .hero-card h1 {
   margin: 0; font-family: var(--display); font-weight: 700;
-  font-size: var(--t-32); line-height: 1.05; letter-spacing: var(--tr-tight);
+  font-size: var(--t-24); line-height: 1.05; letter-spacing: var(--tr-tight);
   text-transform: uppercase; color: var(--g12);
 }
-.hero-card p { margin: 0; font-size: var(--t-14); line-height: 1.6; color: var(--g10); }
+.hero-card p { margin: 0; font-size: var(--t-13); line-height: 1.5; color: var(--g10); }
+.hero-card .btn { height: 34px; font-size: var(--t-13); }
+.hero-card .eyebrow { font-size: 10px; }
 
 .hero-stats {
-  display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4) var(--s5);
-  margin: 0; padding: var(--s4) var(--s5);
-  background: color-mix(in oklab, var(--g2) 72%, transparent);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2) var(--s4);
+  margin: 0; padding: var(--s3) var(--s4);
+  background: color-mix(in oklab, var(--g2) 46%, transparent);
+  border-color: rgba(255,255,255,.09);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 .hero-stats .stat { min-width: 0; }
 .hero-stats dt {
-  font-family: var(--v2-mono); font-size: var(--t-11); letter-spacing: var(--tr-caps);
-  text-transform: uppercase; color: var(--g9); margin-bottom: 2px; white-space: nowrap;
+  font-family: var(--v2-mono); font-size: 9px; letter-spacing: var(--tr-caps);
+  text-transform: uppercase; color: var(--g9); margin-bottom: 1px; white-space: nowrap;
 }
 .hero-stats dd {
-  margin: 0; font-size: var(--t-16); color: var(--g12); white-space: nowrap;
+  margin: 0; font-size: var(--t-13); color: var(--g12); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
 }
 
@@ -1661,6 +1673,9 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 
 @media (max-width: 900px) {
   :root { --shell: min(1240px, 100vw - var(--s6)); }
+  /* on a phone the hud stacks and reaches the third floor, so the pin has to
+     win the stacking context it lives in or it goes behind the card */
+  .video-space { z-index: 16; }
   .hero-inner { grid-template-columns: 1fr; gap: var(--s6); padding-block: var(--s10) calc(var(--s8) + 44px); }
   .clock { font-size: clamp(2.25rem, 13vw, var(--t-64, 4rem)); }
 }

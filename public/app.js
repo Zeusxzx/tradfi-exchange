@@ -717,14 +717,17 @@ function renderTape(stats) {
   const realBook = lastLadder.length > 0;
   if (book) {
     if (realBook) {
-      const max = Math.max(...lastLadder.map((l) => Math.max(l.buySize, l.sellSize))) || 1;
+      /* the bar widths do the arithmetic on *Raw; the cells print the
+         server-formatted strings, so a 2.34e-8 price never reaches the DOM */
+      const sizeOf = (l) => Math.max(Number(l.buySizeRaw) || 0, Number(l.sellSizeRaw) || 0);
+      const max = Math.max(...lastLadder.map(sizeOf)) || 1;
       book.innerHTML = lastLadder.map((l) => {
-        const pct = Math.round((Math.max(l.buySize, l.sellSize) / max) * 100);
-        const side = l.buySize >= l.sellSize ? 'bid' : 'ask';
+        const pct = Math.round((sizeOf(l) / max) * 100);
+        const side = (Number(l.buySizeRaw) || 0) >= (Number(l.sellSizeRaw) || 0) ? 'bid' : 'ask';
         return `<div class="book-row ${side}${l.atLast ? ' at-last' : ''}" data-w="${pct}">
-          <span class="bs">${l.buySize ? l.buySize.toLocaleString('en-US') : ''}</span>
+          <span class="bs">${Number(l.buySizeRaw) ? l.buySize : ''}</span>
           <span class="c px">${l.price}</span>
-          <span class="r as">${l.sellSize ? l.sellSize.toLocaleString('en-US') : ''}</span>
+          <span class="r as">${Number(l.sellSizeRaw) ? l.sellSize : ''}</span>
         </div>`;
       }).join('');
     } else {

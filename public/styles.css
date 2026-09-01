@@ -1679,3 +1679,14 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
   .hero-inner { grid-template-columns: 1fr; gap: var(--s6); padding-block: var(--s10) calc(var(--s8) + 44px); }
   .clock { font-size: clamp(2.25rem, 13vw, var(--t-64, 4rem)); }
 }
+
+/* the contracts repo, linked inline in the spec sheet and in the footer --
+   for a coin whose whole claim is "the contract decides", the source has to
+   be one click from the claim */
+.inline-link {
+  color: var(--paper); text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 3px;
+  transition: text-decoration-color 140ms ease;
+}
+.inline-link:hover { text-decoration-color: currentColor; }
+.footer-bar a + a { margin-left: 0; }

@@ -43,3 +43,90 @@ test('exposes non-secret Robinhood Chain configuration', () => {
   assert.equal(config.chain.hexId, '0x1237');
   assert.equal(config.tokenAddress, '');
 });
+
+/* ---- launch wiring --------------------------------------------------------
+   The pool id and which side of the pair the token sits on are derived, not
+   handed over. Both are checked against the two real deploys recorded in the
+   contracts repo's broadcast files, so a change to the derivation that would
+   silently point the tape at the wrong pool fails here instead of on launch
+   day. */
+const swaps = require('../swaps');
+const { keccak256 } = require('../keccak');
+
+const WETH_TESTNET = '0x33e4191705c386532ba27cbf171db86919200b94';
+
+test('keccak256 matches the known empty-string vector', () => {
+  assert.equal(
+    keccak256(Buffer.from('', 'utf8')),
+    '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
+  );
+});
+
+test('the calendar selectors the site eth_calls are the real ones', () => {
+  assert.equal(keccak256(Buffer.from('isMarketOpen()')).slice(0, 10), '0xd4ce85f3');
+  assert.equal(keccak256(Buffer.from('nextOpen(uint256)')).slice(0, 10), '0x564be63f');
+});
+
+test('pool id derives to the real Deploy.s.sol pool', () => {
+  assert.equal(
+    swaps.derivePoolId(
+      '0x31200377343522bf566d3627768b9ccdb26bfff4', WETH_TESTNET,
+      '0x4e0279e43be4c61ee09654c5261f2c0882080080'
+    ),
+    '0x5c02d1b18f7a022ccfaabc87d415ba3e396e7f70981c349c965a5f582a2630ba'
+  );
+});
+
+test('pool id derives to the real DeployTestLaunch pool', () => {
+  assert.equal(
+    swaps.derivePoolId(
+      '0x8afdccd79d9415a565713b660250b6d09b739c9a', WETH_TESTNET,
+      '0xea21a36bb3b3f44262368b10ec01f5b35c178080'
+    ),
+    '0x5affb360ab201810b3715697f373e7e8990aacd3ac60b81394f2cf2a3efd7c44'
+  );
+});
+
+test('token0 is the lower address of the pair', () => {
+  assert.equal(swaps.deriveTokenIsToken0('0x31200377343522bf566d3627768b9ccdb26bfff4', WETH_TESTNET), true);
+  assert.equal(swaps.deriveTokenIsToken0('0x8afdccd79d9415a565713b660250b6d09b739c9a', WETH_TESTNET), false);
+});
+
+test('a memecoin price never renders in scientific notation', () => {
+  // TRADFI against WETH will live around 1e-8; toPrecision(5) would print
+  // "2.3400e-8" on the tape, which reads as a broken row.
+  for (const v of [2.34e-8, 1.7e-12, 0.0412, 1.2345, 31087540.26]) {
+    assert.ok(!/e[-+]/i.test(swaps.fmtPrice(v)), `${v} -> ${swaps.fmtPrice(v)}`);
+  }
+  assert.equal(swaps.fmtPrice(null), '—');
+});
+
+test('a real trade never renders as size 0', () => {
+  assert.notEqual(swaps.fmtSize(0.396), '0');
+  assert.notEqual(swaps.fmtSize(0.0081), '0');
+  assert.equal(swaps.fmtSize(12400000), '12,400,000');
+  assert.equal(swaps.fmtSize(0), '0');
+});
+
+test('mainnet reports Robinhood Chain 4663, not the testnet id', () => {
+  const prev = process.env.MARKET_CALENDAR_NETWORK;
+  process.env.MARKET_CALENDAR_NETWORK = 'mainnet';
+  assert.equal(require('../server').getPublicConfig().marketCalendar.chainId, 4663);
+  process.env.MARKET_CALENDAR_NETWORK = 'testnet';
+  assert.equal(require('../server').getPublicConfig().marketCalendar.chainId, 46630);
+  if (prev === undefined) delete process.env.MARKET_CALENDAR_NETWORK;
+  else process.env.MARKET_CALENDAR_NETWORK = prev;
+});
+
+test('the site is not tradeable until both the token and the route are set', () => {
+  const { getPublicConfig } = require('../server');
+  const t = process.env.TOKEN_ADDRESS, u = process.env.TRADE_URL;
+  delete process.env.TOKEN_ADDRESS; delete process.env.TRADE_URL;
+  assert.equal(getPublicConfig().tradeable, false);
+  process.env.TOKEN_ADDRESS = '0x1111111111111111111111111111111111111111';
+  assert.equal(getPublicConfig().tradeable, false, 'a token with no route is not tradeable');
+  process.env.TRADE_URL = 'https://app.uniswap.org/swap';
+  assert.equal(getPublicConfig().tradeable, true);
+  if (t === undefined) delete process.env.TOKEN_ADDRESS; else process.env.TOKEN_ADDRESS = t;
+  if (u === undefined) delete process.env.TRADE_URL; else process.env.TRADE_URL = u;
+});

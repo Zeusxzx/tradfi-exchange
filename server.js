@@ -269,8 +269,11 @@ function getPublicConfig() {
     // is dramatizing. Rehearsed + proven on testnet; mainnet address is set once
     // TradFiCoin actually launches on Robinhood Chain mainnet (4663).
     marketCalendar: {
-      network: process.env.MARKET_CALENDAR_NETWORK || 'testnet',
-      chainId: 46630,
+      // 4663 is Robinhood Chain mainnet, 46630 the testnet. This was pinned to
+      // the testnet id, so flipping MARKET_CALENDAR_NETWORK=mainnet would have
+      // shipped a mainnet address labelled with the testnet's chain.
+      network: (process.env.MARKET_CALENDAR_NETWORK || 'testnet'),
+      chainId: (process.env.MARKET_CALENDAR_NETWORK || 'testnet') === 'mainnet' ? 4663 : 46630,
       address: process.env.MARKET_CALENDAR_ADDRESS || '0xdC9A372eFaB73F3D45E01ECE286d6be614a5E693',
       rpcUrl: process.env.MARKET_CALENDAR_RPC_URL || 'https://rpc.testnet.chain.robinhood.com',
       // function selectors, computed offline (keccak256 of the signature) so the
@@ -284,7 +287,18 @@ function getPublicConfig() {
     // over to the live face -- no redeploy of the front end, just env vars.
     tradeable: Boolean(
       (process.env.TOKEN_ADDRESS || '').trim() && (process.env.TRADE_URL || '').trim()
-    )
+    ),
+    // what the tape is actually reading, so a wrong pool is visible from the
+    // outside instead of just showing an empty tape
+    pool: {
+      id: swaps.CFG.poolId,
+      source: swaps.CFG.poolIdSource,
+      tokenIsToken0: swaps.CFG.tokenIsToken0,
+      poolManager: swaps.CFG.poolManager,
+      hook: (process.env.HOOK_ADDRESS || '').trim() || null,
+      weth: (process.env.WETH_ADDRESS || '').trim() || null
+    },
+    repo: 'https://github.com/northclauder/TradFI'
   };
 }
 

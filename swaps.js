@@ -15,8 +15,52 @@
    out on getLogs spans past ~50k blocks. So this backfills in chunks once,
    then polls only what is new, and keeps a rolling window in memory. */
 
+const { keccak256 } = require('./keccak');
+
 const SWAP_TOPIC = '0x40e9cecb9f5f1f1c5b9c97dec2917b7ee92e57ba5563708daca94dd84ad7112f';
 const Q96 = 2n ** 96n;
+
+/* ---- deriving the pool instead of being told it -------------------------
+   A v4 pool's id is keccak256(abi.encode(PoolKey)) -- currency0, currency1,
+   fee, tickSpacing, hooks, each left-padded to 32 bytes. Every one of those
+   is already known at launch: the pair sorts by address, the fee and tick
+   spacing are fixed in DeployLib (1% / 200), and the hook comes out of the
+   deploy alongside the token.
+
+   So POOL_ID and TOKEN_IS_TOKEN0 do not have to be handed over and cannot be
+   typed wrong -- give the server TOKEN_ADDRESS, HOOK_ADDRESS and WETH_ADDRESS
+   and it computes both. Verified against both real deploys in the contracts
+   repo: Deploy.s.sol -> 0x5c02d1b1..., DeployTestLaunch -> 0x5affb360...
+   An explicit POOL_ID still wins, as an escape hatch. */
+const POOL_FEE = Number(process.env.POOL_FEE_PPM || 10000);      // 1%
+const TICK_SPACING = Number(process.env.POOL_TICK_SPACING || 200);
+
+function pad32(hex) {
+  return String(hex).replace(/^0x/, '').toLowerCase().padStart(64, '0');
+}
+
+/** The v4 pool id for a token/WETH pair under a given hook. */
+function derivePoolId(token, weth, hook, fee = POOL_FEE, tickSpacing = TICK_SPACING) {
+  const t = String(token).toLowerCase();
+  const w = String(weth).toLowerCase();
+  const [c0, c1] = t < w ? [t, w] : [w, t];
+  return keccak256(Buffer.from(
+    pad32(c0) + pad32(c1) + pad32(fee.toString(16)) + pad32(tickSpacing.toString(16)) + pad32(hook),
+    'hex'
+  ));
+}
+
+/** token0 is simply the lower address of the pair. */
+function deriveTokenIsToken0(token, weth) {
+  return String(token).toLowerCase() < String(weth).toLowerCase();
+}
+
+const TOKEN = (process.env.TOKEN_ADDRESS || '').trim();
+const HOOK = (process.env.HOOK_ADDRESS || '').trim();
+const WETH = (process.env.WETH_ADDRESS || '').trim();
+const canDerive = /^0x[0-9a-fA-F]{40}$/.test(TOKEN)
+  && /^0x[0-9a-fA-F]{40}$/.test(HOOK)
+  && /^0x[0-9a-fA-F]{40}$/.test(WETH);
 
 const CFG = {
   rpc: process.env.SWAPS_RPC_URL || process.env.MARKET_CALENDAR_RPC_URL
@@ -24,9 +68,13 @@ const CFG = {
   poolManager: process.env.POOL_MANAGER || '0x8366a39CC670B4001A1121B8F6A443A643e40951',
   // the launched pool. Deploy.s.sol's pool is 0x5c02d1b1..., the rehearsal
   // pool that actually has a trade in it is 0x5affb360...
-  poolId: process.env.POOL_ID || '0x5affb360ab201810b3715697f373e7e8990aacd3ac60b81394f2cf2a3efd7c44',
+  poolId: (process.env.POOL_ID || '').trim()
+       || (canDerive ? derivePoolId(TOKEN, WETH, HOOK) : '0x5affb360ab201810b3715697f373e7e8990aacd3ac60b81394f2cf2a3efd7c44'),
   // true when the token we quote is token0 of the pair
-  tokenIsToken0: process.env.TOKEN_IS_TOKEN0 === 'true',
+  tokenIsToken0: process.env.TOKEN_IS_TOKEN0
+    ? process.env.TOKEN_IS_TOKEN0 === 'true'
+    : (canDerive ? deriveTokenIsToken0(TOKEN, WETH) : false),
+  poolIdSource: (process.env.POOL_ID || '').trim() ? 'env' : (canDerive ? 'derived' : 'default'),
   lookbackBlocks: Number(process.env.SWAPS_LOOKBACK || 900000),
   chunk: 45000,
   pollMs: 15000,
@@ -140,6 +188,34 @@ async function tick() {
 
 function start() { tick(); setInterval(tick, CFG.pollMs); }
 
+/* ---- printing a memecoin price --------------------------------------------
+   toPrecision(5) is right for a $180 stock and wrong for everything this pool
+   will actually trade at: a token priced at 2.34e-8 WETH comes out as the
+   string "2.3400e-8", which reads as a bug on a price ladder. So: fixed
+   decimals scaled to the magnitude, never exponent notation, and always the
+   same number of significant figures so the column stays aligned. */
+function fmtPrice(v) {
+  if (v === null || v === undefined || !isFinite(v)) return '—';
+  const a = Math.abs(v);
+  if (a === 0) return '0';
+  // enough decimals to keep 5 significant figures, capped at 18
+  const decimals = a >= 1 ? Math.max(0, 5 - Math.floor(Math.log10(a)) - 1)
+                          : Math.min(18, 4 - Math.floor(Math.log10(a)));
+  return v.toFixed(decimals);
+}
+
+/* Sizes span the same range for the opposite reason: 1.79 billion tokens in
+   the pool means a print can be 12,400,000 or 0.4. Math.round() turned the
+   second one into the string "0", which looks like a broken row. */
+function fmtSize(v) {
+  if (v === null || v === undefined || !isFinite(v)) return '—';
+  const a = Math.abs(v);
+  if (a === 0) return '0';
+  if (a >= 1000) return Math.round(v).toLocaleString('en-US');
+  if (a >= 1) return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  return v.toPrecision(2).replace(/e[-+]\d+$/, '');
+}
+
 /* Open, high, low, last and volume for a window -- the numbers a quote block
    is made of. `since` is the session open; anything before it is the previous
    session, which is where prevClose comes from. */
@@ -197,9 +273,12 @@ function ladder(since, levels = 18) {
   return [...buckets.values()]
     .sort((a, b) => b.price - a.price)   // highest price first, like a book
     .map((r) => ({
-      price: r.price.toPrecision(5),
-      buySize: Math.round(r.buySize),
-      sellSize: Math.round(r.sellSize),
+      price: fmtPrice(r.price),
+      priceRaw: r.price,
+      buySize: fmtSize(r.buySize),
+      sellSize: fmtSize(r.sellSize),
+      buySizeRaw: r.buySize,
+      sellSizeRaw: r.sellSize,
       trades: r.trades,
       atLast: Math.abs(r.price - last) <= step / 2
     }));
@@ -208,11 +287,13 @@ function ladder(since, levels = 18) {
 function tape(limit = 40) {
   return trades.slice(-limit).reverse().map((t) => ({
     time: new Date(t.at).toLocaleTimeString('en-US', { hour12: false, timeZone: 'America/New_York' }),
-    price: t.price === null ? '—' : t.price.toPrecision(5),
-    size: Math.round(t.size).toLocaleString('en-US'),
+    price: fmtPrice(t.price),
+    priceRaw: t.price,
+    size: fmtSize(t.size),
+    sizeRaw: t.size,
     side: t.side,
     tx: t.tx
   }));
 }
 
-module.exports = { start, quote, tape, ladder, CFG };
+module.exports = { start, quote, tape, ladder, fmtPrice, fmtSize, derivePoolId, deriveTokenIsToken0, CFG };

@@ -147,12 +147,13 @@ async function loadQuote() {
   ladderRows = q.ladder || [];
   const lad = $('#ladder');
   if (ladderRows.length) {
-    const max = Math.max(...ladderRows.map((l) => Math.max(l.buySize, l.sellSize))) || 1;
+    const rawOf = (l) => Math.max(Number(l.buySizeRaw) || 0, Number(l.sellSizeRaw) || 0);
+    const max = Math.max(...ladderRows.map(rawOf)) || 1;
     lad.innerHTML = ladderRows.map((l) => `<div class="lad-row${l.atLast ? ' at-last' : ''}"
-        style="--bw:${(l.buySize / max * 42).toFixed(1)}%;--sw:${(l.sellSize / max * 42).toFixed(1)}%">
-        <span class="b">${l.buySize ? fmtInt(l.buySize) : ''}</span>
+        style="--bw:${((Number(l.buySizeRaw)||0) / max * 42).toFixed(1)}%;--sw:${((Number(l.sellSizeRaw)||0) / max * 42).toFixed(1)}%">
+        <span class="b">${Number(l.buySizeRaw) ? l.buySize : ''}</span>
         <span class="px">${l.price}</span>
-        <span class="s">${l.sellSize ? fmtInt(l.sellSize) : ''}</span></div>`).join('');
+        <span class="s">${Number(l.sellSizeRaw) ? l.sellSize : ''}</span></div>`).join('');
     $('#ladCount').textContent = fmtInt(ladderRows.reduce((a, l) => a + l.trades, 0)) + ' trades';
   } else {
     lad.innerHTML = `<div class="lad-row"><span class="muted" style="grid-column:1/-1;text-align:center">

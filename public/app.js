@@ -33,10 +33,10 @@ const people = {
 
 let publicConfig = null;
 let marketStatus = null;
-let activeView = (() => {
-  const v = new URLSearchParams(location.search).get('view');
-  return v === 'open' || v === 'closed' ? v : 'live';
-})();
+// The page follows the contract's calendar and nothing else. There is no
+// preview mode and no manual switch: at 9:30 New York it is the day floor, at
+// 4:00 it is the night floor, and that is the only thing that decides.
+const activeView = 'live';
 let selectedSide = 'buy';
 let toastTimer;
 let planeTimer;
@@ -429,8 +429,6 @@ async function connectWallet() {
   }
 }
 
-viewButtons.forEach((button) => button.addEventListener('click', () => { activeView = button.dataset.viewButton; renderView(); }));
-document.querySelector('#resetLive').addEventListener('click', () => { activeView = 'live'; renderView(); });
 personTargets.forEach((target) => target.addEventListener('click', () => openPersonCard(target.dataset.person)));
 /* '#openStory' lived in the nav that the landing rebuild removed. Bind it only
    if some other surface still renders it, instead of throwing on load. */
@@ -1066,33 +1064,6 @@ schedulePlane();
 })();
 
 
-/* ---- preview toggle ------------------------------------------------------
-   Cycles live → open → closed and repaints everything that depends on state:
-   which building is showing, which board, the headline, the hotspot cast. */
-(function stateToggle() {
-  const btn = document.querySelector('#stateToggle');
-  const label = document.querySelector('#stateToggleLabel');
-  if (!btn || !label) return;
-
-  const ORDER = ['live', 'open', 'closed'];
-  const TEXT = { live: 'Live', open: 'Market open', closed: 'After hours' };
-
-  function show() {
-    btn.dataset.state = activeView;
-    label.textContent = TEXT[activeView];
-    btn.setAttribute('title', activeView === 'live'
-      ? 'Following the on-chain calendar'
-      : 'Previewing ' + TEXT[activeView].toLowerCase() + ' — click to cycle');
-  }
-
-  btn.addEventListener('click', () => {
-    activeView = ORDER[(ORDER.indexOf(activeView) + 1) % ORDER.length];
-    renderView();
-    show();
-  });
-
-  show();
-})();
 
 /* ---- enter the bullpen ----------------------------------------------------
    Not a route change: a page load would kill the zoom, and the whole point is
@@ -1135,6 +1106,24 @@ schedulePlane();
     return scenes;
   }
 
+  /* A <video preload="none"> that is asked to load late can come back with
+     networkState LOADING and readyState 0 and simply sit there -- the request
+     is open but no frames ever arrive, and the scene stays frozen on its
+     poster, which looks exactly like a still image. Nudge anything that has
+     not produced a frame; three tries, a second apart. */
+  function kick(tries) {
+    const n = tries === undefined ? 3 : tries;
+    if (n <= 0 || !open) return;
+    setTimeout(() => {
+      if (!open) return;
+      const stuck = [...document.querySelectorAll('#bullpenDay video, #bullpenNight video')]
+        .filter((v) => v.readyState < 2);
+      if (!stuck.length) return;
+      stuck.forEach((v) => { try { v.load(); v.play().catch(() => {}); } catch (e) {} });
+      kick(n - 1);
+    }, 1200);
+  }
+
   function copyFor() {
     const isOpen = visibleState() === 'open';
     if (enterSub) enterSub.textContent = isOpen ? 'The floor is running' : 'The floor is dark';
@@ -1164,7 +1153,7 @@ schedulePlane();
     view.hidden = false;
     copyFor(); tick();
     const sc = ensureScenes();
-    if (sc) { sc.day.play(); sc.night.play(); }
+    if (sc) { sc.day.play(); sc.night.play(); kick(); }
     // nothing on the stage is visible from in here; four decoders is enough
     sceneDay.pause(); sceneNight.pause();
     // The overlay must not start crossfading while the building is still small

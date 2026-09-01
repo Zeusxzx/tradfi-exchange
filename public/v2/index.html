@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#08090a" />
+    <meta name="robots" content="noindex" />
+    <title>TradFiCoin — staging</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link href="/assets/fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/v2/v2.css?v=1" />
+    <script src="/v2/v2.js?v=1" defer></script>
+  </head>
+  <body>
+    <header class="masthead" id="masthead">
+      <a class="brand" href="/v2/">
+        <img src="/assets/logo-mark.png" alt="" width="26" height="26" />
+        <span>
+          <span class="brand-name" data-token-name>TradFiCoin</span>
+          <span class="brand-sub">New York Stock Exchange hours</span>
+        </span>
+      </a>
+      <div class="top-actions">
+        <span class="chip" id="mastChip" data-state="closed"><i class="dot"></i><span id="mastState">Closed</span></span>
+        <button class="btn btn-sm" id="connect" type="button">Connect wallet</button>
+        <button class="btn btn-sm btn-primary" id="trade" type="button">Trade</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ---------------------------------------------------------------- -->
+      <section class="hero">
+        <div class="hero-media" aria-hidden="true">
+          <video autoplay muted playsinline loop preload="auto" poster="/assets/exchange-tower-day-v14.jpg">
+            <source src="/assets/exchange-tower-day-v14.webm" type="video/webm" />
+            <source src="/assets/exchange-tower-day-v14.mp4" type="video/mp4" />
+          </video>
+          <video class="night" autoplay muted playsinline loop preload="auto" poster="/assets/exchange-tower-night-v14.jpg">
+            <source src="/assets/exchange-tower-night-v14.webm" type="video/webm" />
+            <source src="/assets/exchange-tower-night-v14.mp4" type="video/mp4" />
+          </video>
+        </div>
+
+        <div class="hero-inner">
+          <div class="clock-wrap" data-reveal>
+            <span class="eyebrow" id="clockLabel">Opens in</span>
+            <div class="clock num" id="clock" aria-live="off"></div>
+            <div class="hero-sub">
+              <span class="chip" id="heroChip" data-state="closed"><i class="dot"></i><span id="heroState">Closed</span></span>
+              <span class="eyebrow" id="heroHours">9:30 AM – 4:00 PM ET</span>
+              <span class="eyebrow" id="heroNY">--:--:-- ET</span>
+            </div>
+          </div>
+
+          <div class="card hero-card" data-reveal style="transition-delay:80ms">
+            <span class="eyebrow">What this is</span>
+            <h1>A coin that keeps market hours.</h1>
+            <p>You can only trade <b data-token-symbol>$TRADFI</b> while the New York Stock
+              Exchange is open. After the closing bell the contract itself refuses the trade.</p>
+            <button class="btn btn-primary" id="heroTrade" type="button">
+              <span id="heroTradeLabel">Not live yet</span><span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+
+      <!-- ---------------------------------------------------------------- -->
+      <section class="section shell">
+        <div class="section-head" data-reveal>
+          <div>
+            <span class="eyebrow">The premise</span>
+            <h2>The market closes.<br />So does the coin.</h2>
+          </div>
+          <p class="muted" style="max-width:34ch;font-size:var(--t-14)">9:30 AM to 4:00 PM,
+            New York time. Outside those hours, nobody trades it.</p>
+        </div>
+        <ol class="rail">
+          <li data-reveal><span class="n">01</span><div><h3>It keeps hours</h3>
+            <p>Opens at 9:30 AM. Shuts at 4:00 PM. New York time.</p></div></li>
+          <li data-reveal style="transition-delay:60ms"><span class="n">02</span><div><h3>Nobody holds a key</h3>
+            <p>The hours live in the contract. At 9:30 it opens itself, at 4:00 it closes itself.</p></div></li>
+          <li data-reveal style="transition-delay:120ms"><span class="n">03</span><div><h3>Miss it and you wait</h3>
+            <p>Try to buy at 4:01 and the chain turns you down. Come back when the bell rings.</p></div></li>
+        </ol>
+      </section>
+
+      <!-- ---------------------------------------------------------------- -->
+      <section class="section shell">
+        <div class="grid-2">
+          <div class="card" data-reveal>
+            <div class="card-head">
+              <div>
+                <span class="eyebrow" data-token-symbol>$TRADFI</span>
+                <div class="muted" style="font-size:var(--t-13)">Robinhood Chain · Uniswap v4</div>
+              </div>
+              <span class="chip chip-sample" id="quoteSample" hidden>Sample</span>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;align-items:baseline;gap:var(--s3);margin-bottom:var(--s4)">
+                <strong class="quote-big" id="qLast">—</strong>
+                <span class="delta" id="qDelta">—</span>
+              </div>
+              <p class="frozen" id="qFrozen" hidden></p>
+              <dl class="stats" style="margin-top:var(--s5)">
+                <div class="stat"><dt>Open</dt><dd class="num" id="qOpen">—</dd></div>
+                <div class="stat"><dt>High</dt><dd class="num" id="qHigh">—</dd></div>
+                <div class="stat"><dt>Low</dt><dd class="num" id="qLow">—</dd></div>
+                <div class="stat"><dt>Prev close</dt><dd class="num" id="qPrev">—</dd></div>
+                <div class="stat"><dt>Volume</dt><dd class="num" id="qVol">—</dd></div>
+                <div class="stat"><dt>Trades</dt><dd class="num" id="qCount">—</dd></div>
+              </dl>
+            </div>
+          </div>
+
+          <aside class="card" data-reveal style="transition-delay:80ms">
+            <div class="card-head">
+              <span class="eyebrow">Your account</span>
+              <button class="btn btn-sm" id="connect2" type="button">Connect</button>
+            </div>
+            <div class="card-body" id="acct"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------------------- -->
+      <section class="section shell">
+        <div class="grid-2">
+          <div class="card" data-reveal>
+            <div class="card-head">
+              <div><span class="eyebrow">Time &amp; sales</span><h2 style="font-size:var(--t-24)">The tape</h2></div>
+              <span class="chip" id="tapeChip" data-state="closed"><i class="dot"></i><span>Closed</span></span>
+            </div>
+            <div class="cols"><span>Time</span><span class="r">Price</span><span class="r">Size</span><span class="r">Side</span></div>
+            <div class="rows" id="tape"></div>
+          </div>
+
+          <div class="card" data-reveal style="transition-delay:80ms">
+            <div class="card-head">
+              <div><span class="eyebrow">Volume at price</span><h2 style="font-size:var(--t-24)">Buys &amp; sells</h2></div>
+              <span class="eyebrow" id="ladCount"></span>
+            </div>
+            <div class="cols lad-cols"><span>Bought</span><span class="r" style="text-align:center">Price</span><span class="r">Sold</span></div>
+            <div class="rows" id="ladder"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------------------- -->
+      <section class="section shell">
+        <div class="card" data-reveal>
+          <div class="card-head">
+            <div><span class="eyebrow" data-token-symbol>$TRADFI</span><h2 style="font-size:var(--t-24)">Holders of record</h2></div>
+            <span class="eyebrow"><b id="holderCount">—</b> holders</span>
+          </div>
+          <div class="rows" style="max-height:420px">
+            <table class="table">
+              <thead><tr><th class="num">#</th><th>Holder</th><th class="num">Position</th><th class="num">% out</th></tr></thead>
+              <tbody id="holders"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------------------- -->
+      <section class="section shell">
+        <div class="section-head" data-reveal>
+          <div><span class="eyebrow">Under the hood</span><h2>How it's actually built</h2></div>
+        </div>
+        <dl class="specs" data-reveal>
+          <div><dt>Hours</dt><dd>09:30–16:00 ET, Mon–Fri · 13:00 on half days</dd></div>
+          <div><dt>Enforced by</dt><dd>A Uniswap v4 hook that checks <code>MarketCalendar.isMarketOpen()</code> before any swap</dd></div>
+          <div><dt>Outside hours</dt><dd>The swap reverts with <code>MarketClosed(nextOpen)</code></dd></div>
+          <div><dt>Calendar</dt><dd>On-chain — daylight saving, holidays and half days all stored in the contract</dd></div>
+          <div><dt>Token</dt><dd>Plain ERC-20 · no tax, no owner, no transfer hooks</dd></div>
+          <div><dt>Liquidity</dt><dd>Pooled and locked permanently · 1% swap fee</dd></div>
+          <div><dt>Network</dt><dd>Robinhood Chain · 4663</dd></div>
+          <div><dt>Supply</dt><dd>1,792,000,000 — the year the NYSE was founded</dd></div>
+        </dl>
+      </section>
+
+      <footer class="footer shell">
+        <span data-token-name>TradFiCoin</span>
+        <span id="footSource">—</span>
+        <a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noreferrer">Explorer ↗</a>
+      </footer>
+    </main>
+
+    <span class="chip staging">Staging · v2</span>
+    <div class="toaster" id="toaster"></div>
+  </body>
+</html>

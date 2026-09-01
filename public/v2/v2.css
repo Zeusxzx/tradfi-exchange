@@ -1,0 +1,322 @@
+/* ============================================================================
+   TradFiCoin v2 — design system
+   ----------------------------------------------------------------------------
+   Built the way Emil Kowalski builds: one restrained palette, a real type
+   scale, motion that is felt rather than seen, and a focus state on every
+   single thing you can touch. Nothing here is decorative. If a value appears
+   twice it is a token; if it appears once it is a mistake.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* --- colour: a 12-step neutral ramp, one accent per direction ----------- */
+  --g1:  #08090a;   /* app background        */
+  --g2:  #0c0d0f;   /* raised surface        */
+  --g3:  #111214;   /* card                  */
+  --g4:  #17181b;   /* card hover            */
+  --g5:  #1e2023;   /* border, subtle        */
+  --g6:  #26282c;   /* border, visible       */
+  --g7:  #303237;   /* border, strong        */
+  --g8:  #4a4d54;   /* disabled text         */
+  --g9:  #6f737b;   /* tertiary text         */
+  --g10: #9aa0a8;   /* secondary text        */
+  --g11: #c9ced4;   /* primary text, dimmed  */
+  --g12: #f4f6f8;   /* primary text          */
+
+  --up:   #3ecf8e;
+  --up-a: rgba(62, 207, 142, .14);
+  --dn:   #ef5a52;
+  --dn-a: rgba(239, 90, 82, .14);
+
+  /* --- type ---------------------------------------------------------------- */
+  --display: "Khand", "Oswald", ui-sans-serif, system-ui, sans-serif;
+  --sans: "Hind", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --t-11: .6875rem;  --t-12: .75rem;   --t-13: .8125rem; --t-14: .875rem;
+  --t-16: 1rem;      --t-19: 1.1875rem; --t-24: 1.5rem;  --t-32: 2rem;
+  --t-44: 2.75rem;   --t-64: 4rem;      --t-88: 5.5rem;
+
+  --lh-tight: 1.05; --lh-snug: 1.25; --lh-body: 1.6;
+  --tr-tight: -.022em; --tr-flat: 0; --tr-wide: .08em; --tr-caps: .14em;
+
+  /* --- space: 4px base ----------------------------------------------------- */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px; --s5: 20px;
+  --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s16: 64px;
+  --s20: 80px; --s24: 96px; --s32: 128px;
+
+  /* --- shape --------------------------------------------------------------- */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --r-full: 999px;
+
+  /* --- elevation: light from above, never a black blur --------------------- */
+  --e1: 0 1px 2px rgba(0,0,0,.4);
+  --e2: 0 2px 4px rgba(0,0,0,.35), 0 8px 16px -8px rgba(0,0,0,.5);
+  --e3: 0 4px 8px rgba(0,0,0,.3), 0 16px 32px -12px rgba(0,0,0,.6);
+
+  /* --- motion: the part most sites get wrong -------------------------------
+     `--spring` is the one that makes a panel feel like it has weight.
+     Nothing linear except a marquee. Nothing longer than 560ms.            */
+  --spring: cubic-bezier(.32, .72, 0, 1);
+  --ease:   cubic-bezier(.16, 1, .3, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --d-1: 120ms; --d-2: 200ms; --d-3: 320ms; --d-4: 560ms;
+
+  --ring: 0 0 0 2px var(--g1), 0 0 0 4px var(--g10);
+  --shell: min(1240px, 100vw - var(--s10));
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--g1); color: var(--g11);
+  font-family: var(--sans); font-size: var(--t-16); line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+::selection { background: var(--g12); color: var(--g1); }
+:focus-visible { outline: none; box-shadow: var(--ring); border-radius: var(--r-sm); }
+img, video { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 700;
+  letter-spacing: var(--tr-tight); line-height: var(--lh-tight); color: var(--g12);
+  text-transform: uppercase; }
+p { margin: 0; }
+dl, dd, dt, ol, ul, li { margin: 0; padding: 0; list-style: none; }
+
+/* every number on this site is tabular. a price that jitters is a bug. */
+.num, .mono, td.num, .stat dd, .quote-big, .clock { font-family: var(--mono);
+  font-variant-numeric: tabular-nums; letter-spacing: var(--tr-flat); }
+
+.shell { width: var(--shell); margin-inline: auto; }
+.eyebrow { font-family: var(--mono); font-size: var(--t-11);
+  letter-spacing: var(--tr-caps); text-transform: uppercase; color: var(--g9); }
+.muted { color: var(--g10); }
+
+/* --- reveal: 8px and a fade. anything more is a slideshow ------------------ */
+[data-reveal] { opacity: 0; transform: translateY(8px);
+  transition: opacity var(--d-4) var(--ease), transform var(--d-4) var(--ease); }
+[data-reveal].in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* ============================ components ================================= */
+
+/* Button — three variants, one geometry. Presses in, never bounces. */
+.btn {
+  --btn-bg: var(--g3); --btn-fg: var(--g12); --btn-bd: var(--g6);
+  display: inline-flex; align-items: center; gap: var(--s2);
+  height: 38px; padding-inline: var(--s4); border-radius: var(--r-full);
+  border: 1px solid var(--btn-bd); background: var(--btn-bg); color: var(--btn-fg);
+  font-family: var(--sans); font-size: var(--t-14); font-weight: 500;
+  cursor: pointer; white-space: nowrap; user-select: none;
+  transition: background var(--d-1) var(--ease), border-color var(--d-1) var(--ease),
+              transform var(--d-1) var(--spring), opacity var(--d-1) var(--ease);
+}
+.btn:hover { background: var(--g4); border-color: var(--g7); }
+.btn:active { transform: scale(.975); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn[disabled]:active { transform: none; }
+.btn-primary { --btn-bg: var(--g12); --btn-fg: var(--g1); --btn-bd: transparent; }
+.btn-primary:hover { background: #fff; border-color: transparent; }
+.btn-ghost { --btn-bg: transparent; --btn-bd: transparent; --btn-fg: var(--g10); }
+.btn-ghost:hover { background: var(--g3); color: var(--g12); }
+.btn-sm { height: 30px; font-size: var(--t-13); padding-inline: var(--s3); }
+
+/* Card — the only container. One border, one radius, one hover. */
+.card {
+  background: var(--g2); border: 1px solid var(--g5);
+  border-radius: var(--r-lg); box-shadow: var(--e1);
+}
+.card-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--s4); padding: var(--s5) var(--s5) var(--s4);
+}
+.card-body { padding: 0 var(--s5) var(--s5); }
+
+/* Badge / chip */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 22px;
+  padding-inline: var(--s2); border-radius: var(--r-full);
+  border: 1px solid var(--g6); background: var(--g3);
+  font-family: var(--mono); font-size: var(--t-11); letter-spacing: var(--tr-wide);
+  text-transform: uppercase; color: var(--g10);
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--g8); }
+.chip[data-state="open"] { color: var(--up); border-color: rgba(62,207,142,.3); background: var(--up-a); }
+.chip[data-state="open"] .dot { background: var(--up); box-shadow: 0 0 0 3px var(--up-a); }
+.chip[data-state="closed"] { color: var(--dn); border-color: rgba(239,90,82,.28); background: var(--dn-a); }
+.chip[data-state="closed"] .dot { background: var(--dn); }
+.chip-sample { color: var(--g9); border-style: dashed; background: transparent; }
+
+/* Stat row */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: var(--s4) var(--s5); }
+.stat dt { font-family: var(--mono); font-size: var(--t-11); letter-spacing: var(--tr-caps);
+  text-transform: uppercase; color: var(--g9); margin-bottom: 2px; }
+.stat dd { font-size: var(--t-16); color: var(--g12); white-space: nowrap; }
+
+/* Table */
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; font-family: var(--mono); font-weight: 400;
+  font-size: var(--t-11); letter-spacing: var(--tr-caps); text-transform: uppercase;
+  color: var(--g9); padding: var(--s2) var(--s3); position: sticky; top: 0;
+  background: var(--g2); border-bottom: 1px solid var(--g5); z-index: 1; }
+.table td { padding: var(--s3); border-bottom: 1px solid var(--g5); font-size: var(--t-14); }
+.table tbody tr { transition: background var(--d-1) var(--ease); }
+.table tbody tr:hover { background: var(--g3); }
+.table .num { text-align: right; }
+
+/* Toast — Sonner's geometry: bottom right, spring in, stack, auto-dismiss. */
+.toaster { position: fixed; right: var(--s5); bottom: var(--s5); z-index: 90;
+  display: flex; flex-direction: column; gap: var(--s2); pointer-events: none; }
+.toast {
+  pointer-events: auto; display: flex; align-items: center; gap: var(--s3);
+  min-width: 240px; max-width: 360px; padding: var(--s3) var(--s4);
+  background: var(--g3); border: 1px solid var(--g6); border-radius: var(--r-md);
+  box-shadow: var(--e3); color: var(--g12); font-size: var(--t-14);
+  opacity: 0; transform: translateY(12px) scale(.96);
+  transition: opacity var(--d-2) var(--ease), transform var(--d-3) var(--spring);
+}
+.toast.in { opacity: 1; transform: none; }
+
+/* ============================== layout =================================== */
+
+/* Masthead — sticky, and it only earns a border once you have scrolled. */
+.masthead {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4); height: 60px; padding-inline: max(var(--s5), (100vw - var(--shell)) / 2);
+  background: color-mix(in oklab, var(--g1) 78%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--d-2) var(--ease), background var(--d-2) var(--ease);
+}
+.masthead.stuck { border-bottom-color: var(--g5); }
+.brand { display: flex; align-items: center; gap: var(--s3); }
+.brand img { width: 26px; height: 26px; border-radius: var(--r-sm); }
+.brand-name { font-family: var(--display); font-size: var(--t-19); font-weight: 700;
+  letter-spacing: var(--tr-tight); text-transform: uppercase; color: var(--g12); line-height: 1; }
+.brand-sub { display: block; font-family: var(--mono); font-size: var(--t-11);
+  letter-spacing: var(--tr-wide); color: var(--g9); text-transform: uppercase; }
+.top-actions { display: flex; align-items: center; gap: var(--s2); }
+
+/* Hero — the building fills the frame; the clock is the only thing on it. */
+.hero { position: relative; min-height: min(88vh, 900px); display: grid;
+  place-items: end center; overflow: hidden; isolation: isolate; }
+.hero-media { position: absolute; inset: 0; z-index: -2; }
+.hero-media video, .hero-media img { width: 100%; height: 100%; object-fit: cover; }
+.hero-media .night { opacity: var(--night, 1); transition: opacity 1.6s var(--ease); }
+.hero-media > * { position: absolute; inset: 0; }
+.hero::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% 0%, transparent 40%, rgba(8,9,10,.55) 100%),
+    linear-gradient(180deg, rgba(8,9,10,.72) 0%, transparent 26%, transparent 46%, var(--g1) 96%); }
+
+.hero-inner { width: var(--shell); padding-block: var(--s16) var(--s12);
+  display: grid; gap: var(--s10); grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  align-items: end; }
+.clock-wrap { display: grid; gap: var(--s3); }
+.clock {
+  font-size: clamp(var(--t-44), 9vw, var(--t-88)); line-height: .9; color: var(--g12);
+  letter-spacing: -.03em; font-weight: 500;
+  display: flex; gap: .04em;
+}
+.clock .seg { display: inline-block; }
+.clock .sep { opacity: .35; }
+.hero-sub { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+
+.hero-card { padding: var(--s5); display: grid; gap: var(--s4);
+  background: color-mix(in oklab, var(--g2) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(140%); }
+.hero-card h1 { font-size: var(--t-32); }
+.hero-card p { font-size: var(--t-14); color: var(--g10); }
+
+/* Ticker — the only linear motion on the page, and it never restarts. */
+.ticker { border-block: 1px solid var(--g5); background: var(--g2); overflow: hidden; }
+.ticker-track { display: flex; width: max-content; will-change: transform; }
+.ticker-unit { display: flex; flex: 0 0 auto; align-items: center; gap: var(--s6);
+  padding: var(--s3) var(--s6); font-family: var(--mono); font-size: var(--t-12);
+  letter-spacing: var(--tr-wide); color: var(--g10); text-transform: uppercase; white-space: nowrap; }
+.ticker-unit b { color: var(--g12); font-weight: 500; }
+
+/* Sections */
+.section { padding-block: var(--s24); }
+.section-head { display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--s4); margin-bottom: var(--s6); }
+.section-head h2 { font-size: clamp(var(--t-24), 3.4vw, var(--t-44)); }
+
+/* The three points — a hairline threads the numbers, nothing else. */
+.rail { display: grid; gap: 0; }
+.rail li { display: grid; grid-template-columns: 34px 1fr; gap: var(--s5);
+  padding-block: var(--s6); border-top: 1px solid var(--g5); align-items: start; }
+.rail li:first-child { border-top: 0; }
+.rail .n { width: 34px; height: 34px; border-radius: var(--r-full);
+  display: grid; place-items: center; border: 1px solid var(--g6); background: var(--g3);
+  font-family: var(--mono); font-size: var(--t-11); color: var(--g10);
+  transition: border-color var(--d-2) var(--ease), color var(--d-2) var(--ease); }
+.rail li:hover .n { border-color: var(--g8); color: var(--g12); }
+.rail h3 { font-size: var(--t-24); margin-bottom: var(--s1); }
+.rail p { color: var(--g10); font-size: var(--t-14); max-width: 60ch; }
+
+/* Quote */
+.grid-2 { display: grid; gap: var(--s5); grid-template-columns: 1.6fr 1fr; }
+.quote-big { font-size: clamp(var(--t-32), 5vw, var(--t-64)); line-height: 1; color: var(--g12); }
+.delta { display: inline-flex; align-items: center; gap: 4px; padding: 2px var(--s2);
+  border-radius: var(--r-sm); font-family: var(--mono); font-size: var(--t-13); }
+.delta.up { color: var(--up); background: var(--up-a); }
+.delta.dn { color: var(--dn); background: var(--dn-a); }
+.frozen { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-13);
+  color: var(--g9); padding-top: var(--s3); border-top: 1px dashed var(--g6); }
+
+/* Tape + ladder */
+.rows { max-height: 380px; overflow-y: auto; scrollbar-width: thin;
+  scrollbar-color: var(--g6) transparent; }
+.rows::-webkit-scrollbar { width: 6px; }
+.rows::-webkit-scrollbar-thumb { background: var(--g6); border-radius: var(--r-full); }
+.cols, .tape-row, .lad-row { display: grid; align-items: center; gap: var(--s3); }
+.cols { grid-template-columns: 72px 1fr 1fr 52px; padding: var(--s2) var(--s3);
+  font-family: var(--mono); font-size: var(--t-11); letter-spacing: var(--tr-caps);
+  text-transform: uppercase; color: var(--g9); border-bottom: 1px solid var(--g5); }
+.tape-row { grid-template-columns: 72px 1fr 1fr 52px; padding: 7px var(--s3);
+  font-family: var(--mono); font-size: var(--t-12); border-bottom: 1px solid var(--g5); }
+.tape-row .r, .lad-row .r { text-align: right; }
+.tape-row .side { text-align: right; font-size: var(--t-11); letter-spacing: var(--tr-wide); }
+.tape-row.buy .side, .tape-row.buy .px { color: var(--up); }
+.tape-row.sell .side, .tape-row.sell .px { color: var(--dn); }
+
+.lad-cols { grid-template-columns: 1fr 96px 1fr; }
+.lad-row { grid-template-columns: 1fr 96px 1fr; padding: 6px var(--s3);
+  font-family: var(--mono); font-size: var(--t-12); position: relative; }
+.lad-row::before, .lad-row::after { content: ""; position: absolute; top: 2px; bottom: 2px;
+  border-radius: 3px; transition: width var(--d-3) var(--ease); }
+.lad-row::before { right: 50%; margin-right: 52px; width: var(--bw, 0%); background: var(--up-a); }
+.lad-row::after  { left: 50%;  margin-left: 52px;  width: var(--sw, 0%); background: var(--dn-a); }
+.lad-row .b { color: var(--up); position: relative; }
+.lad-row .s { color: var(--dn); position: relative; text-align: right; }
+.lad-row .px { text-align: center; color: var(--g10); position: relative; }
+.lad-row.at-last { background: var(--g3); }
+.lad-row.at-last .px { color: var(--g12); }
+
+/* Specs */
+.specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0; }
+.specs > div { padding: var(--s4) 0; border-top: 1px solid var(--g5); display: grid;
+  grid-template-columns: 140px 1fr; gap: var(--s4); align-items: baseline; }
+.specs dt { font-family: var(--mono); font-size: var(--t-11); letter-spacing: var(--tr-caps);
+  text-transform: uppercase; color: var(--g9); }
+.specs dd { font-size: var(--t-14); color: var(--g11); }
+.specs code { font-family: var(--mono); font-size: .92em; color: var(--g12);
+  background: var(--g3); border: 1px solid var(--g6); border-radius: 4px; padding: 1px 5px; }
+
+.footer { border-top: 1px solid var(--g5); padding-block: var(--s8); margin-top: var(--s16);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s4);
+  font-family: var(--mono); font-size: var(--t-12); color: var(--g9); }
+
+.staging { position: fixed; left: var(--s5); bottom: var(--s5); z-index: 80; }
+
+@media (max-width: 900px) {
+  .hero-inner { grid-template-columns: 1fr; gap: var(--s6); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .specs > div { grid-template-columns: 1fr; gap: var(--s1); }
+  .section { padding-block: var(--s16); }
+}

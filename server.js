@@ -138,7 +138,7 @@ function getQuote() {
 
 function getPublicConfig() {
   return {
-    tokenName: process.env.TOKEN_NAME || 'TradFI',
+    tokenName: process.env.TOKEN_NAME || 'TradFiCoin',
     tokenSymbol: process.env.TOKEN_SYMBOL || 'TRADFI',
     tokenAddress: process.env.TOKEN_ADDRESS || '',
     tradeUrl: process.env.TRADE_URL || '',
@@ -154,7 +154,7 @@ function getPublicConfig() {
     },
     // The MarketCalendar contract is the on-chain source of truth this whole site
     // is dramatizing. Rehearsed + proven on testnet; mainnet address is set once
-    // TradFI actually launches on Robinhood Chain mainnet (4663).
+    // TradFiCoin actually launches on Robinhood Chain mainnet (4663).
     marketCalendar: {
       network: process.env.MARKET_CALENDAR_NETWORK || 'testnet',
       chainId: 46630,

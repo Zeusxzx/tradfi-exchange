@@ -173,6 +173,38 @@ function quote(sessionStartMs) {
   };
 }
 
+/* Volume at price, split by side. Not a book of resting orders -- an AMM has
+   none -- but every row is a real executed trade, bucketed into price levels.
+   Reads the way a book reads (sells above, buys below, size bars either side)
+   and every number in it actually happened. */
+function ladder(since, levels = 18) {
+  const inSession = trades.filter((t) => t.at >= since && t.price !== null);
+  if (!inSession.length) return [];
+  let hi = -Infinity, lo = Infinity;
+  for (const t of inSession) { if (t.price > hi) hi = t.price; if (t.price < lo) lo = t.price; }
+  // a flat session still deserves rows, so give a degenerate range some width
+  const step = hi > lo ? (hi - lo) / levels : (hi || 1) * 0.001;
+  const buckets = new Map();
+  for (const t of inSession) {
+    const idx = hi > lo ? Math.min(levels - 1, Math.floor((t.price - lo) / step)) : 0;
+    const key = lo + idx * step;
+    const row = buckets.get(idx) || { price: key + step / 2, buySize: 0, sellSize: 0, trades: 0 };
+    if (t.side === 'buy') row.buySize += t.size; else row.sellSize += t.size;
+    row.trades += 1;
+    buckets.set(idx, row);
+  }
+  const last = inSession[inSession.length - 1].price;
+  return [...buckets.values()]
+    .sort((a, b) => b.price - a.price)   // highest price first, like a book
+    .map((r) => ({
+      price: r.price.toPrecision(5),
+      buySize: Math.round(r.buySize),
+      sellSize: Math.round(r.sellSize),
+      trades: r.trades,
+      atLast: Math.abs(r.price - last) <= step / 2
+    }));
+}
+
 function tape(limit = 40) {
   return trades.slice(-limit).reverse().map((t) => ({
     time: new Date(t.at).toLocaleTimeString('en-US', { hour12: false, timeZone: 'America/New_York' }),
@@ -183,4 +215,4 @@ function tape(limit = 40) {
   }));
 }
 
-module.exports = { start, quote, tape, CFG };
+module.exports = { start, quote, tape, ladder, CFG };

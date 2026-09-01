@@ -22,6 +22,7 @@ const videoNight = document.querySelector('#videoNight');
 const chainProofLink = document.querySelector('#chainProofLink');
 let closesAtEpoch = null;
 let lastPrints = [];
+let lastLadder = [];
 let bellWatch = null;
 
 const people = {
@@ -447,8 +448,15 @@ if (openStoryBtn) openStoryBtn.addEventListener('click', () => openPersonCard(vi
 document.querySelector('#closePerson').addEventListener('click', closePersonCard);
 const openTrade = document.querySelector('#openTrade');
 if (openTrade) openTrade.addEventListener('click', () => setTradeDrawer(true));
+/* Nobody trades on this site. The coin lives in a Uniswap v4 pool, so the
+   button's whole job is to hand people off to it -- one hop, new tab, done.
+   Until TRADE_URL is set there is nothing to hand off to, so it says so. */
 const heroTrade = document.querySelector('#heroTrade');
-if (heroTrade) heroTrade.addEventListener('click', () => setTradeDrawer(true));
+if (heroTrade) heroTrade.addEventListener('click', () => {
+  const url = publicConfig && publicConfig.tradeUrl;
+  if (!url) { showToast('The pool is not live yet.'); return; }
+  window.open(url, '_blank', 'noopener,noreferrer');
+});
 document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
 drawerScrim.addEventListener('click', () => setTradeDrawer(false));
 walletButton.addEventListener('click', connectAccount);
@@ -654,6 +662,7 @@ function sampleHolders(n, supply) {
 
 function renderTape(stats) {
   if (stats && Array.isArray(stats.prints)) lastPrints = stats.prints;
+  if (stats && Array.isArray(stats.ladder)) lastLadder = stats.ladder;
   const state = document.querySelector('#tapeState');
   const rows = document.querySelector('#tapeRows');
   const book = document.querySelector('#bookRows');
@@ -673,23 +682,44 @@ function renderTape(stats) {
     <span class="r">${t.size}</span><span class="r s">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
   </li>`).join('');
 
+  /* Not resting orders -- an AMM has none. Every row is real volume that
+     actually traded at that price this session, bought on one side, sold on
+     the other. The marked sample only shows before the pool's first swap. */
+  const realBook = lastLadder.length > 0;
   if (book) {
-    const levels = sampleBook(20);
-    const max = Math.max(...levels.map((l) => l.size));
-    book.innerHTML = levels.map((l) => {
-      const pct = Math.round((l.size / max) * 100);
-      return `<div class="book-row ${l.side}" data-w="${pct}">
-        <span class="bs">${l.side === 'bid' ? l.size.toLocaleString('en-US') : ''}</span>
-        <span class="c px">${l.price}</span>
-        <span class="r as">${l.side === 'ask' ? l.size.toLocaleString('en-US') : ''}</span>
-      </div>`;
-    }).join('');
+    if (realBook) {
+      const max = Math.max(...lastLadder.map((l) => Math.max(l.buySize, l.sellSize))) || 1;
+      book.innerHTML = lastLadder.map((l) => {
+        const pct = Math.round((Math.max(l.buySize, l.sellSize) / max) * 100);
+        const side = l.buySize >= l.sellSize ? 'bid' : 'ask';
+        return `<div class="book-row ${side}${l.atLast ? ' at-last' : ''}" data-w="${pct}">
+          <span class="bs">${l.buySize ? l.buySize.toLocaleString('en-US') : ''}</span>
+          <span class="c px">${l.price}</span>
+          <span class="r as">${l.sellSize ? l.sellSize.toLocaleString('en-US') : ''}</span>
+        </div>`;
+      }).join('');
+    } else {
+      const levels = sampleBook(20);
+      const max = Math.max(...levels.map((l) => l.size));
+      book.innerHTML = levels.map((l) => {
+        const pct = Math.round((l.size / max) * 100);
+        return `<div class="book-row ${l.side}" data-w="${pct}">
+          <span class="bs">${l.side === 'bid' ? l.size.toLocaleString('en-US') : ''}</span>
+          <span class="c px">${l.price}</span>
+          <span class="r as">${l.side === 'ask' ? l.size.toLocaleString('en-US') : ''}</span>
+        </div>`;
+      }).join('');
+    }
     book.querySelectorAll('.book-row').forEach((r) => {
       r.style.setProperty('--depth', r.getAttribute('data-w') + '%');
     });
   }
-  if (spread) spread.textContent = '';
-  [rows, book].forEach((el) => el && el.closest('.floor-col') && el.closest('.floor-col').classList.toggle('is-sample', !real));
+  if (spread) {
+    const n = realBook ? lastLadder.reduce((a, l) => a + l.trades, 0) : 0;
+    spread.textContent = realBook ? `${n.toLocaleString('en-US')} trades` : '';
+  }
+  if (rows && rows.closest('.floor-col')) rows.closest('.floor-col').classList.toggle('is-sample', !real);
+  if (book && book.closest('.floor-col')) book.closest('.floor-col').classList.toggle('is-sample', !realBook);
 }
 
 /* ---- the quote block, and your side of it --------------------------------
@@ -764,7 +794,9 @@ async function loadQuote() {
     if (!res.ok) return;
     const q = await res.json();
     paintQuote(q);
-    if (q.prints && q.prints.length) { lastPrints = q.prints; renderTape(null); }
+    if (q.prints && q.prints.length) lastPrints = q.prints;
+    if (Array.isArray(q.ladder)) lastLadder = q.ladder;
+    if ((q.prints && q.prints.length) || (q.ladder && q.ladder.length)) renderTape(null);
     lastQuotePrice = q.last ? q.last.price : null;
     if (accountAddress) paintAccount();
   } catch { /* the page is still readable without a quote */ }

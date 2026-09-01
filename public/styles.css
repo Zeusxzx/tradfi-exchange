@@ -1499,3 +1499,7 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 /* the interior is real footage now, so the fake ken-burns push comes off */
 .bullpen-layer { animation: none; }
 .bullpen-plane { background: #04070b; }
+
+/* the price level the last trade printed at, in the buys-and-sells ladder */
+.book-row.at-last { background: rgba(242,243,244,.06); }
+.book-row.at-last .px { color: var(--paper); font-weight: 600; }

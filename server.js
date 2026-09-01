@@ -244,7 +244,8 @@ function getQuote() {
     isOpen: status.isOpen,
     sessionLabel: status.isOpen ? 'Open' : status.reason,
     coreHours: status.coreHours,
-    prints: swaps.tape(40)
+    prints: swaps.tape(40),
+    ladder: swaps.ladder(sessionStartMs(), 18)
   };
 }
 
@@ -357,6 +358,7 @@ async function getTokenStats() {
     // Time-and-sales. Empty until a pool exists and swaps start clearing --
     // the tape shows what the chain actually did, never a simulation of it.
     prints: [],
+    ladder: [],
     explorerUrl: `${EXPLORER_API}/token/${STATS_TOKEN}`,
     fetchedAt: new Date().toISOString(),
     live: Boolean(token)

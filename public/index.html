@@ -6,6 +6,23 @@
     <meta name="theme-color" content="#05070a" />
     <meta name="description" content="TradFiCoin — a memecoin on New York Stock Exchange hours. Trades are only possible while the NYSE is open, enforced on-chain, not by a website." />
     <title>TradFiCoin — a memecoin on New York Stock Exchange hours</title>
+    <link rel="canonical" href="https://tradficoin.trade/" />
+
+    <!-- the link card: a freeze frame off the day tower, same treatment as the hero -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TradFiCoin" />
+    <meta property="og:url" content="https://tradficoin.trade/" />
+    <meta property="og:title" content="TradFiCoin — a memecoin on New York Stock Exchange hours" />
+    <meta property="og:description" content="You can only trade $TRADFI while the New York Stock Exchange is open. 9:30 AM to 4:00 PM ET, enforced on-chain, not by a website." />
+    <meta property="og:image" content="https://tradficoin.trade/assets/og-card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="628" />
+    <meta property="og:image:alt" content="The exchange tower at street level, three lit trading floors above the door." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TradFiCoin — a memecoin on New York Stock Exchange hours" />
+    <meta name="twitter:description" content="You can only trade $TRADFI while the New York Stock Exchange is open. 9:30 AM to 4:00 PM ET, enforced on-chain, not by a website." />
+    <meta name="twitter:image" content="https://tradficoin.trade/assets/og-card.jpg" />
+
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/assets/favicon-32.png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
@@ -90,37 +107,40 @@
           <div class="grain" aria-hidden="true"></div>
 
 
+          <!-- The hero head, lifted from /v2 one-to-one: the same shell width,
+               the same bottom anchor, the same card, chip and button geometry.
+               Only the ids are V1's, so app.js keeps driving it. -->
           <div class="hud">
-            <!-- left: the number that matters, and the four that back it up -->
-            <section class="hud-clock" aria-labelledby="hudClockLabel">
-              <span class="hud-label" id="hudClockLabel" data-clock-label>Opens in</span>
-              <strong class="hud-time" id="hudTime">--:--:--</strong>
-              <div class="hud-meta">
-                <span class="hud-chip" id="hudChip" data-state="closed"><i></i><span id="hudChipLabel">Closed</span></span>
-                <span class="hud-sub" id="hudSub">9:30 AM – 4:00 PM ET</span>
-                <span class="hud-ny" id="hudNY">--:--:-- ET</span>
+            <div class="hero-inner">
+              <div class="clock-wrap">
+                <span class="eyebrow" id="hudClockLabel" data-clock-label>Opens in</span>
+                <div class="clock num" id="hudTime" aria-live="off">--:--:--</div>
+                <div class="hero-sub">
+                  <span class="chip" id="hudChip" data-state="closed"><i class="dot"></i><span id="hudChipLabel">Closed</span></span>
+                  <span class="eyebrow" id="hudSub">9:30 AM – 4:00 PM ET</span>
+                  <span class="eyebrow" id="hudNY">--:--:-- ET</span>
+                </div>
               </div>
-            </section>
 
-            <!-- right: the whole pitch, in as few words as it takes -->
-            <div class="hud-right">
-            <aside class="hud-card" aria-labelledby="hudCardTitle">
-              <span class="hud-label">What this is</span>
-              <h1 class="hud-title" id="hudCardTitle">A coin that keeps<br />market hours.</h1>
-              <p class="hud-copy">You can only trade <span data-token-symbol>$TRADFI</span> while the
-                New York Stock Exchange is open. After the closing bell the contract
-                itself refuses the trade.</p>
-              <button class="hud-cta" id="heroTrade" type="button">
-                <span id="heroTradeLabel">Trade</span><span aria-hidden="true">↗</span>
-              </button>
-              <span class="hud-foot" id="heroTradeFoot">Robinhood Chain · Uniswap v4</span>
-            </aside>
-            <dl class="hud-stats">
-              <div><dt>Market cap</dt><dd data-stat="marketCap">—</dd></div>
-              <div><dt>24h volume</dt><dd data-stat="volume24h">—</dd></div>
-              <div><dt>Holders</dt><dd data-stat="holders">—</dd></div>
-              <div><dt>Supply</dt><dd data-stat="supply">—</dd></div>
-            </dl>
+              <div class="hero-right">
+                <div class="card hero-card" aria-labelledby="hudCardTitle">
+                  <span class="eyebrow">What this is</span>
+                  <h1 id="hudCardTitle">A coin that keeps market hours.</h1>
+                  <p>You can only trade <b data-token-symbol>$TRADFI</b> while the New York
+                    Stock Exchange is open. After the closing bell the contract itself
+                    refuses the trade.</p>
+                  <button class="btn btn-primary" id="heroTrade" type="button">
+                    <span id="heroTradeLabel">Trade</span><span aria-hidden="true">↗</span>
+                  </button>
+                  <span class="eyebrow" id="heroTradeFoot">Robinhood Chain · Uniswap v4</span>
+                </div>
+                <dl class="card hero-stats">
+                  <div class="stat"><dt>Market cap</dt><dd class="num" data-stat="marketCap">—</dd></div>
+                  <div class="stat"><dt>24h volume</dt><dd class="num" data-stat="volume24h">—</dd></div>
+                  <div class="stat"><dt>Holders</dt><dd class="num" data-stat="holders">—</dd></div>
+                  <div class="stat"><dt>Supply</dt><dd class="num" data-stat="supply">—</dd></div>
+                </dl>
+              </div>
             </div>
           </div>
 
@@ -159,7 +179,7 @@
         <div class="bullpen-hud">
           <span class="bullpen-tag" id="bullpenTag">The floor</span>
           <h2 class="bullpen-title" id="bullpenTitle">Nobody is here.</h2>
-          <p class="bullpen-copy" id="bullpenCopy">The desks are cold until 9:30.</p>
+          <p class="bullpen-copy" id="bullpenCopy">The coin starts trading at 9:30 AM New York time.</p>
           <dl class="bullpen-stats">
             <div><dt id="bullpenClockLabel">Opens in</dt><dd id="bullpenClock">--:--:--</dd></div>
             <div><dt>New York</dt><dd id="bullpenNY">--:--:-- ET</dd></div>
@@ -206,7 +226,7 @@
                 <span class="quote-sym" data-token-symbol>$TRADFI</span>
                 <span class="quote-venue">Robinhood Chain · Uniswap v4</span>
               </div>
-              <span class="head-right"><span class="sample-chip">Sample</span><span class="quote-status" id="quoteStatus"><i></i><span>Closed</span></span></span>
+              <span class="head-right"><span class="quote-status" id="quoteStatus"><i></i><span>Closed</span></span></span>
             </div>
             <div class="quote-price">
               <strong id="quoteLast">—</strong>
@@ -225,7 +245,7 @@
 
           <aside class="account" id="account">
             <div class="account-head">
-              <span class="head-right"><span class="section-eyebrow">Your account</span><span class="sample-chip">Sample</span></span>
+              <span class="head-right"><span class="section-eyebrow">Your account</span></span>
               <button class="account-connect" id="accountConnect" type="button">Connect wallet</button>
             </div>
             <div class="account-body" id="accountBody"></div>
@@ -240,7 +260,7 @@
                   <span class="section-eyebrow">Time &amp; sales</span>
                   <h2>The tape</h2>
                 </div>
-                <span class="head-right"><span class="sample-chip">Sample</span><span class="tape-state" id="tapeState"><i></i> Closed</span></span>
+                <span class="head-right"><span class="tape-state" id="tapeState"><i></i> Closed</span></span>
               </div>
               <div class="tape">
                 <div class="tape-cols" aria-hidden="true">
@@ -256,7 +276,7 @@
                   <span class="section-eyebrow">Volume at price</span>
                   <h2>Buys &amp; sells</h2>
                 </div>
-                <span class="head-right"><span class="sample-chip">Sample</span><span class="book-spread" id="bookSpread"></span></span>
+                <span class="head-right"><span class="book-spread" id="bookSpread"></span></span>
               </div>
               <div class="book">
                 <div class="book-cols" aria-hidden="true">
@@ -277,7 +297,7 @@
               <h2 id="listingTitle">Holders of record</h2>
             </div>
             <div class="listing-meta">
-              <span class="sample-chip">Sample</span>
+              
               <span><b data-stat="holders">—</b> holders</span>
               <a id="listingLink" href="#" target="_blank" rel="noreferrer">Full register ↗</a>
             </div>

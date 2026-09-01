@@ -376,8 +376,19 @@ function sendJson(response, statusCode, value) {
   response.end(JSON.stringify(value));
 }
 
+// /v2 was a staging rebuild. It is closed to the public -- the source stays in
+// the repo so it can be diffed against production, but nothing serves it.
+const BLOCKED_PREFIXES = ['/v2'];
+function isBlocked(requestPath) {
+  return BLOCKED_PREFIXES.some((p) => requestPath === p || requestPath.startsWith(p + '/'));
+}
+
 function serveStatic(requestPath, response, headers) {
-  // a directory request ('/', '/v2/') means that directory's index.html;
+  if (isBlocked(requestPath)) {
+    sendJson(response, 404, { error: 'Not found' });
+    return;
+  }
+  // a directory request ('/') means that directory's index.html;
   // without this a folder resolves to a directory stat and 500s
   const normalizedPath = requestPath.endsWith('/') ? requestPath + 'index.html' : requestPath;
   const filePath = path.resolve(PUBLIC_DIR, `.${normalizedPath}`);

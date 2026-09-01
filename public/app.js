@@ -1202,8 +1202,8 @@ schedulePlane();
     tag.textContent   = isOpen ? 'The floor · open' : 'The floor · closed';
     title.textContent = isOpen ? 'Everybody is here.' : 'Nobody is here.';
     copy.textContent  = isOpen
-      ? 'Every desk manned, every line lit. Until 4:00 the contract lets the trade through.'
-      : 'Lights out, screens dead, chairs pushed in. The contract refuses the trade until 9:30.';
+      ? 'The coin is trading. It stops at 4:00 PM New York time.'
+      : 'The coin starts trading at 9:30 AM New York time.';
     if (clockLabel) clockLabel.textContent = isOpen ? 'Closes in' : 'Opens in';
   }
 

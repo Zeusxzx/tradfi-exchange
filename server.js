@@ -387,6 +387,12 @@ function serveStatic(requestPath, response, headers) {
   }
 
   fs.stat(filePath, (statError, stat) => {
+    // A folder is not an error. '/v2' and '/v2/' both mean that folder's
+    // index.html -- without this, dropping the trailing slash 500s.
+    if (!statError && stat.isDirectory()) {
+      serveStatic(requestPath.replace(/\/*$/, '') + '/index.html', response, headers);
+      return;
+    }
     if (statError || !stat.isFile()) {
       sendJson(response, statError && statError.code === 'ENOENT' ? 404 : 500, { error: 'Not found' });
       return;

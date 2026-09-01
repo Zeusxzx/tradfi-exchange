@@ -95,16 +95,15 @@
             <section class="hud-clock" aria-labelledby="hudClockLabel">
               <span class="hud-label" id="hudClockLabel" data-clock-label>Opens in</span>
               <strong class="hud-time" id="hudTime">--:--:--</strong>
-              <span class="hud-sub" id="hudSub">9:30 AM – 4:00 PM ET</span>
-              <dl class="hud-stats">
-                <div><dt>Market cap</dt><dd data-stat="marketCap">—</dd></div>
-                <div><dt>24h volume</dt><dd data-stat="volume24h">—</dd></div>
-                <div><dt>Holders</dt><dd data-stat="holders">—</dd></div>
-                <div><dt>Supply</dt><dd data-stat="supply">—</dd></div>
-              </dl>
+              <div class="hud-meta">
+                <span class="hud-chip" id="hudChip" data-state="closed"><i></i><span id="hudChipLabel">Closed</span></span>
+                <span class="hud-sub" id="hudSub">9:30 AM – 4:00 PM ET</span>
+                <span class="hud-ny" id="hudNY">--:--:-- ET</span>
+              </div>
             </section>
 
             <!-- right: the whole pitch, in as few words as it takes -->
+            <div class="hud-right">
             <aside class="hud-card" aria-labelledby="hudCardTitle">
               <span class="hud-label">What this is</span>
               <h1 class="hud-title" id="hudCardTitle">A coin that keeps<br />market hours.</h1>
@@ -116,6 +115,13 @@
               </button>
               <span class="hud-foot" id="heroTradeFoot">Robinhood Chain · Uniswap v4</span>
             </aside>
+            <dl class="hud-stats">
+              <div><dt>Market cap</dt><dd data-stat="marketCap">—</dd></div>
+              <div><dt>24h volume</dt><dd data-stat="volume24h">—</dd></div>
+              <div><dt>Holders</dt><dd data-stat="holders">—</dd></div>
+              <div><dt>Supply</dt><dd data-stat="supply">—</dd></div>
+            </dl>
+            </div>
           </div>
 
           <div class="ticker-tape" aria-hidden="true">

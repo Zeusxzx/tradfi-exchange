@@ -276,11 +276,36 @@ function renderView() {
   closePersonCard();
 }
 
+/* A countdown that redraws every digit every second reads as a flicker. Each
+   character owns a box; only the ones whose value actually changed animate,
+   and they slide rather than blink. */
+function paintHudTime(text) {
+  const host = document.querySelector('#hudTime');
+  if (!host) return;
+  const chars = text.split('');
+  if (host.children.length !== chars.length) {
+    host.innerHTML = chars.map((c) => `<span class="${/[0-9]/.test(c) ? 'd' : 'c'}">${c}</span>`).join('');
+    return;
+  }
+  chars.forEach((c, i) => {
+    const node = host.children[i];
+    if (node.textContent === c) return;
+    node.textContent = c;
+    if (node.animate) node.animate(
+      [{ transform: 'translateY(-40%)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: 220, easing: 'cubic-bezier(.16,1,.3,1)' }
+    );
+  });
+}
+
 function updateClock() {
   const now = new Date();
-  document.querySelector('#newYorkTime').textContent = `${new Intl.DateTimeFormat('en-US', {
+  const nyText = `${new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   }).format(now)} ET`;
+  document.querySelector('#newYorkTime').textContent = nyText;
+  const heroNY = document.querySelector('#hudNY');
+  if (heroNY) heroNY.textContent = nyText;
   if (activeView === 'live') {
     experience.style.setProperty('--night-mix', getNightMix().toFixed(3));
     renderSystems();
@@ -307,7 +332,7 @@ function updateClock() {
   const label = days
     ? `${days}D ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
     : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  if (hudTime) hudTime.textContent = label;
+  if (hudTime) paintHudTime(label);
 
   // The countdown reaching zero is the whole point of the site. Do not wait for
   // the next 60-second poll to find out the bell rang -- ask immediately, and
@@ -511,6 +536,10 @@ function renderHud(state) {
   const sub = document.querySelector('#hudSub');
   if (label) label.textContent = open ? 'Closes in' : 'Opens in';
   if (sub) sub.textContent = marketStatus ? marketStatus.coreHours : '9:30 AM – 4:00 PM ET';
+  const chip = document.querySelector('#hudChip');
+  const chipLabel = document.querySelector('#hudChipLabel');
+  if (chip) chip.dataset.state = open ? 'open' : 'closed';
+  if (chipLabel) chipLabel.textContent = open ? 'Open' : 'Closed';
 
   const cta = document.querySelector('#heroTrade');
   const ctaLabel = document.querySelector('#heroTradeLabel');

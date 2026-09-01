@@ -1503,3 +1503,98 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 /* the price level the last trade printed at, in the buys-and-sells ladder */
 .book-row.at-last { background: rgba(242,243,244,.06); }
 .book-row.at-last .px { color: var(--paper); font-weight: 600; }
+
+/* ==== hero head, v2 treatment ==============================================
+   The clock stops being a panel. A countdown is the loudest fact on this page
+   and putting it behind frosted glass was arguing with itself -- so it is now
+   just the number, on the building, at the size it deserves. The pitch keeps
+   its card, flattened, and the four stats move underneath it where they read
+   as a footnote to the pitch instead of competing with the clock.
+   Everything welded to the building -- the boards, the bullpen pin, the
+   ticker -- is untouched.                                                  */
+
+.hud { align-items: flex-end !important; gap: clamp(20px, 4vw, 56px); }
+
+/* --- left: the number ---------------------------------------------------- */
+.hud-clock {
+  width: auto !important; min-width: 0 !important; max-width: min(620px, 54vw);
+  padding: 0 !important; display: block !important;
+  background: none !important; border: 0 !important; box-shadow: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+.hud-clock .hud-label {
+  font-size: 10px !important; letter-spacing: .18em !important;
+  color: rgba(255,255,255,.58);
+}
+.hud-time {
+  font-size: clamp(46px, 8.6vw, 96px) !important;
+  margin: 10px 0 14px !important; letter-spacing: -.035em !important;
+  line-height: .92; text-shadow: 0 2px 34px rgba(0,0,0,.6);
+  display: flex !important; gap: .02em;
+}
+/* each digit is its own box so only the one that changed animates */
+.hud-time .d { display: inline-block; }
+.hud-time .c { display: inline-block; opacity: .32; }
+
+.hud-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.hud-meta .hud-sub, .hud-ny {
+  font-family: var(--data); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: rgba(255,255,255,.6);
+}
+.hud-chip {
+  display: inline-flex; align-items: center; gap: 7px; height: 24px;
+  padding: 0 10px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.2); background: rgba(8,11,16,.5);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font-family: var(--data); font-size: 10px; letter-spacing: .13em;
+  text-transform: uppercase; color: rgba(255,255,255,.8);
+}
+.hud-chip i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.5); }
+.hud-chip[data-state="open"] { color: #7de6ab; border-color: rgba(82,209,127,.4); }
+.hud-chip[data-state="open"] i { background: #52d17f; box-shadow: 0 0 0 3px rgba(82,209,127,.18); }
+.hud-chip[data-state="closed"] { color: #ff9a92; border-color: rgba(255,95,82,.38); }
+.hud-chip[data-state="closed"] i { background: #ff5f52; }
+
+/* --- right: the card, flattened, with the stats under it ----------------- */
+.hud-right {
+  display: flex; flex-direction: column; gap: 10px;
+  width: min(330px, 44vw); flex: 0 0 auto;
+}
+.hud-card {
+  width: 100% !important; min-width: 0 !important;
+  padding: 18px 20px 17px !important; border-radius: 14px !important;
+  background: rgba(10,13,18,.62) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: 0 8px 28px -12px rgba(0,0,0,.7) !important;
+  backdrop-filter: blur(16px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+}
+.hud-card .hud-title { font-size: clamp(21px, 2.1vw, 27px) !important; }
+.hud-card .hud-copy { font-size: 12.5px !important; line-height: 1.5 !important; }
+
+/* the stats become a quiet strip, not a boxed grid */
+.hud-stats {
+  display: grid !important; grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0 !important; margin: 0 !important;
+  background: rgba(10,13,18,.5) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 12px !important; overflow: hidden;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.hud-stats > div {
+  padding: 9px 10px !important; background: none !important;
+  border-left: 1px solid rgba(255,255,255,.08);
+}
+.hud-stats > div:first-child { border-left: 0; }
+.hud-stats dt { font-size: 8px !important; letter-spacing: .11em !important; }
+.hud-stats dd { font-size: 12.5px !important; margin-top: 3px !important; }
+
+@media (max-width: 900px) {
+  .hud { align-items: stretch !important; gap: 16px; }
+  .hud-clock { max-width: none; }
+  .hud-right { width: auto; }
+  .hud-time { font-size: clamp(40px, 13vw, 64px) !important; }
+  .hud-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .hud-stats > div:nth-child(3) { border-left: 0; }
+}

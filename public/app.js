@@ -595,14 +595,11 @@ async function loadTokenStats() {
 
   const body = document.querySelector('#holderRows');
   if (!body) return;
-  const real = (stats.topHolders || []).filter((h) => h.share > 0.00001);
-  // Pre-launch the register is the deploy wallet and a burn address, which
-  // shows nothing about how the table reads full. Same rule as the tape:
-  // clearly marked sample until there is a real book behind it.
-  const useSample = real.length < 4;
-  const rows = useSample ? sampleHolders(20, stats.supply || 1792000000) : (stats.topHolders || []);
+  /* The register is whoever actually holds the token -- pre-launch that is the
+     pool and the deployer, and two rows is the true answer. It used to invent
+     twenty holders to make the table look full. */
+  const rows = stats.topHolders || [];
   const records = document.querySelector('.records');
-  if (records) records.classList.toggle('is-sample', useSample);
   if (!rows.length) {
     body.innerHTML = '<tr class="listing-empty"><td colspan="4">The register opens with the book.</td></tr>';
     return;
@@ -631,67 +628,16 @@ async function loadTokenStats() {
    same data one step earlier -- resting bids and offers stacked away from the
    mid, deepest at the edges.
 
-   Until the pool exists there is nothing real to draw, so both run on clearly
-   marked SAMPLE data: it is labelled on the page, and it is replaced by real
-   prints the moment `prints` comes back non-empty from the chain. Nothing here
-   is ever presented as a genuine trade record. */
-function samplePrints(n) {
-  const SAMPLE_MID = 0.0412;
-  // deterministic, so it does not reshuffle on every repaint
-  const out = []; let seed = 7;
-  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
-  let t = new Date(); t.setHours(15, 58, 12, 0);
-  let px = SAMPLE_MID;
-  for (let i = 0; i < n; i++) {
-    const buy = rnd() > .45;
-    px = Math.max(0.0001, px + (buy ? 1 : -1) * SAMPLE_MID * rnd() * .004);
-    const size = Math.round((900 + rnd() * 48000) / 100) * 100;
-    out.push({
-      time: t.toTimeString().slice(0, 8),
-      price: px.toFixed(5),
-      size: size.toLocaleString('en-US'),
-      side: buy ? 'buy' : 'sell'
-    });
-    t = new Date(t.getTime() - Math.round(1200 + rnd() * 9000));
-  }
-  return out;
-}
-
-function sampleBook(levels) {
-  const SAMPLE_MID = 0.0412;
-  const rows = []; let seed = 21;
-  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
-  for (let i = levels - 1; i >= 0; i--) {
-    rows.push({ side: 'ask', price: (SAMPLE_MID * (1 + (i + 1) * .0015)).toFixed(5),
-                size: Math.round((2000 + rnd() * 70000) / 100) * 100 });
-  }
-  for (let i = 0; i < levels; i++) {
-    rows.push({ side: 'bid', price: (SAMPLE_MID * (1 - (i + 1) * .0015)).toFixed(5),
-                size: Math.round((2000 + rnd() * 70000) / 100) * 100 });
-  }
-  return rows;
-}
-
-function sampleHolders(n, supply) {
-  let seed = 91;
-  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
-  const hex = () => '0x' + Array.from({ length: 40 }, () => '0123456789abcdef'[Math.floor(rnd() * 16)]).join('');
-  const weights = Array.from({ length: n }, (_, i) => 1 / Math.pow(i + 1.6, 1.25) + rnd() * .01)
-    .sort((a, b) => b - a);   // a register runs largest first, always
-  const total = weights.reduce((a, b) => a + b, 0);
-  return weights.map((w, i) => ({
-    rank: i + 1,
-    address: hex(),
-    isContract: i === 0,
-    label: null,
-    amount: Math.round((w / total) * supply),
-    share: w / total
-  }));
-}
-
+   Until the pool clears its first swap there is nothing real to draw, so both
+   draw nothing and say so. No simulated print has ever been worth the doubt it
+   casts on the real ones beside it. */
 function renderTape(stats) {
-  if (stats && Array.isArray(stats.prints)) lastPrints = stats.prints;
-  if (stats && Array.isArray(stats.ladder)) lastLadder = stats.ladder;
+  /* /api/quote owns the tape; /api/token-stats carries empty prints/ladder
+     arrays and used to overwrite the real ones with them every 90 seconds, so
+     a live tape would fill in and then blank itself on a timer. Only a
+     non-empty array is allowed to take over. */
+  if (stats && Array.isArray(stats.prints) && stats.prints.length) lastPrints = stats.prints;
+  if (stats && Array.isArray(stats.ladder) && stats.ladder.length) lastLadder = stats.ladder;
   const state = document.querySelector('#tapeState');
   const rows = document.querySelector('#tapeRows');
   const book = document.querySelector('#bookRows');
@@ -704,16 +650,20 @@ function renderTape(stats) {
     state.lastChild.textContent = open ? ' Open' : ' Closed';
   }
 
+  /* Nothing invented. Until the pool clears its first swap there is no tape,
+     and the honest thing to show is that there is no tape -- a made-up print
+     with no label on it is just a lie with a monospace font. */
   const real = lastPrints.length > 0;
-  const prints = real ? lastPrints : samplePrints(40);
-  rows.innerHTML = prints.map((t) => `<li class="${t.side === 'buy' ? 'buy' : 'sell'}">
-    <span>${t.time}</span><span class="r p">${t.price}</span>
-    <span class="r">${t.size}</span><span class="r s">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
-  </li>`).join('');
+  rows.innerHTML = real
+    ? lastPrints.map((t) => `<li class="${t.side === 'buy' ? 'buy' : 'sell'}">
+        <span>${t.time}</span><span class="r p">${t.price}</span>
+        <span class="r">${t.size}</span><span class="r s">${t.side === 'buy' ? 'BOT' : 'SLD'}</span>
+      </li>`).join('')
+    : `<li class="tape-empty"><span>No trades yet. The tape starts at the pool's first swap.</span></li>`;
 
   /* Not resting orders -- an AMM has none. Every row is real volume that
      actually traded at that price this session, bought on one side, sold on
-     the other. The marked sample only shows before the pool's first swap. */
+     the other. Before the first swap it says so instead of drawing one. */
   const realBook = lastLadder.length > 0;
   if (book) {
     if (realBook) {
@@ -731,16 +681,7 @@ function renderTape(stats) {
         </div>`;
       }).join('');
     } else {
-      const levels = sampleBook(20);
-      const max = Math.max(...levels.map((l) => l.size));
-      book.innerHTML = levels.map((l) => {
-        const pct = Math.round((l.size / max) * 100);
-        return `<div class="book-row ${l.side}" data-w="${pct}">
-          <span class="bs">${l.side === 'bid' ? l.size.toLocaleString('en-US') : ''}</span>
-          <span class="c px">${l.price}</span>
-          <span class="r as">${l.side === 'ask' ? l.size.toLocaleString('en-US') : ''}</span>
-        </div>`;
-      }).join('');
+      book.innerHTML = `<div class="book-empty">Nothing has traded yet. Every row here is real volume at a real price.</div>`;
     }
     book.querySelectorAll('.book-row').forEach((r) => {
       r.style.setProperty('--depth', r.getAttribute('data-w') + '%');
@@ -750,8 +691,8 @@ function renderTape(stats) {
     const n = realBook ? lastLadder.reduce((a, l) => a + l.trades, 0) : 0;
     spread.textContent = realBook ? `${n.toLocaleString('en-US')} trades` : '';
   }
-  if (rows && rows.closest('.floor-col')) rows.closest('.floor-col').classList.toggle('is-sample', !real);
-  if (book && book.closest('.floor-col')) book.closest('.floor-col').classList.toggle('is-sample', !realBook);
+  if (rows && rows.closest('.floor-col')) rows.closest('.floor-col').classList.toggle('is-empty', !real);
+  if (book && book.closest('.floor-col')) book.closest('.floor-col').classList.toggle('is-empty', !realBook);
 }
 
 /* ---- the quote block, and your side of it --------------------------------
@@ -759,32 +700,25 @@ function renderTape(stats) {
    last, volume, and the print itself. When the market shuts, the block does
    what a stock page does -- it freezes on the last trade and says so, rather
    than blanking. */
-const px = (v) => v === null || v === undefined ? '—'
-  : (v >= 1 ? v.toFixed(4) : v.toPrecision(5));
-
-function sampleQuote(isOpen) {
-  // Derived from the same deterministic prints the tape draws, so the block
-  // and the tape never disagree. Marked SAMPLE on the page, and dropped the
-  // moment the pool returns a real trade.
-  const p = samplePrints(22).map((t) => Number(t.price));
-  const sizes = samplePrints(22).map((t) => Number(String(t.size).replace(/,/g, '')));
-  const open = p[p.length - 1], close = p[0];
-  return {
-    sample: true, isOpen,
-    last: { price: close, size: sizes[0], side: 'buy', at: Date.now() - 60000 },
-    open, high: Math.max(...p), low: Math.min(...p),
-    prevClose: open * 0.994,
-    change: (close - open * 0.994) / (open * 0.994),
-    volume: sizes.reduce((a, b) => a + b, 0),
-    tradeCount: p.length
-  };
-}
+/* The same rule the server applies to the tape, applied to the quote block --
+   this one formats client-side, so it kept printing 7.3890e-8 for a price the
+   tape beside it was already rendering as 0.000000073890. Fixed decimals
+   scaled to the magnitude, never an exponent. */
+const px = (v) => {
+  if (v === null || v === undefined || !isFinite(v)) return '—';
+  const a = Math.abs(v);
+  if (a === 0) return '0';
+  const decimals = a >= 1 ? Math.max(0, 5 - Math.floor(Math.log10(a)) - 1)
+                          : Math.min(18, 4 - Math.floor(Math.log10(a)));
+  return v.toFixed(decimals);
+};
 
 function paintQuote(q) {
   const el = document.querySelector('#quote');
   if (!el || !q) return;
-  if (!q.last) q = { ...sampleQuote(q.isOpen), sessionLabel: q.sessionLabel };
-  el.classList.toggle('is-sample', Boolean(q.sample));
+  /* No last trade means no quote. Every field falls to an em dash rather than
+     borrowing a number from a simulation -- the block fills itself in the
+     moment the pool prints. */
   el.dataset.state = q.isOpen ? 'open' : 'closed';
   const st = document.querySelector('#quoteStatus span');
   if (st) st.textContent = q.isOpen ? 'Open' : (q.sessionLabel || 'Closed');
@@ -851,25 +785,25 @@ async function readBalance(addr) {
 
 function paintAccount() {
   const body = document.querySelector('#accountBody');
-  const panel = document.querySelector('#account');
   if (!body) return;
   const supply = 1792000000;
-  // Zeus has no EVM wallet, and a panel that says "connect to see it" shows
-  // nothing. So it renders a worked example, marked SAMPLE, and the real
-  // numbers replace it the moment a wallet is actually connected.
-  const demo = !accountAddress;
-  if (panel) panel.classList.toggle('is-sample', demo);
-  const addr = demo ? '0x8f2a7c4b19e6d0335a1c88be74f9021dcb35a7e1' : accountAddress;
-  const bal = demo ? 12_480_000 : accountBalance;
+  /* No wallet, no position. This used to render an invented 12,480,000 balance
+     against an invented price; a made-up holding on a coin page is the one
+     number nobody should ever see. Empty until a wallet is actually connected. */
+  if (!accountAddress) {
+    body.innerHTML = `<p class="account-empty">Connect a wallet to see your position.</p>`;
+    return;
+  }
+  const bal = accountBalance;
   const share = bal === null ? null : bal / supply;
-  const px0 = lastQuotePrice || 0.04125;
-  const value = bal !== null ? bal * px0 : null;
+  const px0 = lastQuotePrice;
+  const value = (bal !== null && px0) ? bal * px0 : null;
   body.innerHTML = `
-    <p class="account-addr">${addr.slice(0, 6)}…${addr.slice(-4)}</p>
+    <p class="account-addr">${accountAddress.slice(0, 6)}…${accountAddress.slice(-4)}</p>
     <dl class="account-rows">
       <div><dt>Position</dt><dd>${bal === null ? '—' : Math.round(bal).toLocaleString('en-US')}</dd></div>
       <div><dt>% outstanding</dt><dd>${share === null ? '—' : (share * 100).toFixed(share < 0.0001 ? 4 : 2) + '%'}</dd></div>
-      <div><dt>Last price</dt><dd>${px(px0)}</dd></div>
+      <div><dt>Last price</dt><dd>${px0 ? px(px0) : '—'}</dd></div>
       <div><dt>Value</dt><dd>${value === null ? '—' : (value >= 1
         ? value.toLocaleString('en-US', { maximumFractionDigits: 2 })
         : value.toPrecision(5))}</dd></div>

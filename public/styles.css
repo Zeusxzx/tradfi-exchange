@@ -1690,3 +1690,31 @@ html[data-bullpen="open"] .bullpen-exit { opacity: 1; }
 }
 .inline-link:hover { text-decoration-color: currentColor; }
 .footer-bar a + a { margin-left: 0; }
+
+/* the empty states that replaced the invented data. Quiet, not apologetic --
+   an empty tape before launch is the correct reading, not a broken panel */
+.tape-empty, .book-empty, .account-empty {
+  display: block; padding: 18px 14px; margin: 0;
+  font-family: var(--data); font-size: 11px; line-height: 1.6;
+  letter-spacing: .06em; color: rgba(255,255,255,.42);
+}
+.tape-empty { list-style: none; }
+.book-empty { text-align: center; }
+
+/* ---- a clipped price is a wrong price ------------------------------------
+   A memecoin price is fourteen characters long ("0.000000082811"). The quote
+   stat cells were built for "180.25" and cut the last digit off every one of
+   them -- the live test showed OPEN as 0.00000008281 while the tape beside it
+   printed 0.000000082811. The cells now size to their contents and the number
+   shrinks to fit rather than losing a digit. */
+/* six cells, so three across and two down -- auto-fit gave five and a gap */
+.quote-stats { grid-template-columns: repeat(3, 1fr) !important; }
+.quote-stats > div { min-width: 0; }
+.quote-stats dd {
+  font-size: clamp(11px, 1.05vw, 14px);
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  letter-spacing: -.01em;
+}
+@media (max-width: 640px) {
+  .quote-stats { grid-template-columns: repeat(2, 1fr) !important; }
+}

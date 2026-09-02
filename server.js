@@ -369,10 +369,9 @@ async function getTokenStats() {
     volume24h: token && token.volume_24h != null ? Number(token.volume_24h) : null,
     price: token && token.exchange_rate != null ? Number(token.exchange_rate) : null,
     topHolders: list,
-    // Time-and-sales. Empty until a pool exists and swaps start clearing --
-    // the tape shows what the chain actually did, never a simulation of it.
-    prints: [],
-    ladder: [],
+    // No prints or ladder here. They used to be empty arrays on this payload,
+    // which the front end faithfully adopted every 90 seconds -- wiping the
+    // real tape /api/quote had just filled in. The tape has one source.
     explorerUrl: `${EXPLORER_API}/token/${STATS_TOKEN}`,
     fetchedAt: new Date().toISOString(),
     live: Boolean(token)

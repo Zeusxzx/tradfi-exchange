@@ -130,3 +130,26 @@ test('the site is not tradeable until both the token and the route are set', () 
   if (t === undefined) delete process.env.TOKEN_ADDRESS; else process.env.TOKEN_ADDRESS = t;
   if (u === undefined) delete process.env.TRADE_URL; else process.env.TRADE_URL = u;
 });
+
+test('the quote block never prints an exponent either', () => {
+  // the front end formats this one, so it needs the same rule as the tape;
+  // this mirrors public/app.js's px()
+  const px = (v) => {
+    if (v === null || v === undefined || !isFinite(v)) return '—';
+    const a = Math.abs(v);
+    if (a === 0) return '0';
+    const d = a >= 1 ? Math.max(0, 5 - Math.floor(Math.log10(a)) - 1)
+                     : Math.min(18, 4 - Math.floor(Math.log10(a)));
+    return v.toFixed(d);
+  };
+  for (const v of [7.389e-8, 9.5e-8, 2.34e-12, 0.0412, 180.25]) {
+    assert.ok(!/e[-+]/i.test(px(v)), `${v} -> ${px(v)}`);
+  }
+});
+
+test('token-stats does not carry a tape that could overwrite the real one', async () => {
+  const { getTokenStats } = require('../server');
+  const stats = await getTokenStats();
+  assert.equal(stats.prints, undefined, 'prints on token-stats blanked the live tape every 90s');
+  assert.equal(stats.ladder, undefined, 'ladder on token-stats blanked the live ladder every 90s');
+});

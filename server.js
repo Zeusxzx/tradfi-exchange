@@ -3,6 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const swaps = require('./swaps');
+const { stripJs, stripCss, stripHtml } = require('./strip');
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORT = Number(process.env.PORT || 3000);
@@ -202,9 +203,6 @@ function getMarketStatus(now = new Date()) {
   return {
     isOpen: openNow,
     state: openNow ? 'open' : 'closed',
-    source: chainKnows ? 'contract' : 'fallback',
-    calendarAddress: CALENDAR.address,
-    calendarError: chain.error,
     reason,
     timeZone: NYSE_TIME_ZONE,
     coreHours: NYSE_EARLY_CLOSES.has(parts.dateKey) ? '9:30 AM–1:00 PM ET' : '9:30 AM–4:00 PM ET',
@@ -238,8 +236,9 @@ function sessionStartMs(now = new Date()) {
 function getQuote() {
   const status = getMarketStatus();
   const q = swaps.quote(sessionStartMs());
+  const { poolId, ...rest } = q;   // the pool id identifies the wiring; not shipped
   return {
-    ...q,
+    ...rest,
     symbol: (process.env.TOKEN_SYMBOL || 'TRADFI'),
     isOpen: status.isOpen,
     sessionLabel: status.isOpen ? 'Open' : status.reason,
@@ -265,40 +264,13 @@ function getPublicConfig() {
       rpcUrl: process.env.RPC_URL || 'https://rpc.mainnet.chain.robinhood.com',
       explorerUrl: process.env.EXPLORER_URL || 'https://robinhoodchain.blockscout.com'
     },
-    // The MarketCalendar contract is the on-chain source of truth this whole site
-    // is dramatizing. Rehearsed + proven on testnet; mainnet address is set once
-    // TradFiCoin actually launches on Robinhood Chain mainnet (4663).
-    marketCalendar: {
-      // 4663 is Robinhood Chain mainnet, 46630 the testnet. This was pinned to
-      // the testnet id, so flipping MARKET_CALENDAR_NETWORK=mainnet would have
-      // shipped a mainnet address labelled with the testnet's chain.
-      network: (process.env.MARKET_CALENDAR_NETWORK || 'testnet'),
-      chainId: (process.env.MARKET_CALENDAR_NETWORK || 'testnet') === 'mainnet' ? 4663 : 46630,
-      address: process.env.MARKET_CALENDAR_ADDRESS || '0xdC9A372eFaB73F3D45E01ECE286d6be614a5E693',
-      rpcUrl: process.env.MARKET_CALENDAR_RPC_URL || 'https://rpc.testnet.chain.robinhood.com',
-      // function selectors, computed offline (keccak256 of the signature) so the
-      // browser can eth_call this contract with zero dependencies:
-      isMarketOpenSelector: '0xd4ce85f3', // isMarketOpen()
-      nextOpenSelector: '0x564be63f' // nextOpen(uint256)
-    },
-    // The page has two faces. Before the pool exists there is nothing to buy,
-    // so the hero sells the idea and the Trade button is a placeholder. The
-    // moment TOKEN_ADDRESS and TRADE_URL are both set the site flips itself
-    // over to the live face -- no redeploy of the front end, just env vars.
+    /* Nothing about the mechanism goes over the wire. The browser used to be
+       handed the calendar address, its RPC, the function selectors and the
+       pool wiring; none of that is needed to draw the page. The server does
+       the chain reads and publishes the answer, not the method. */
     tradeable: Boolean(
       (process.env.TOKEN_ADDRESS || '').trim() && (process.env.TRADE_URL || '').trim()
-    ),
-    // what the tape is actually reading, so a wrong pool is visible from the
-    // outside instead of just showing an empty tape
-    pool: {
-      id: swaps.CFG.poolId,
-      source: swaps.CFG.poolIdSource,
-      tokenIsToken0: swaps.CFG.tokenIsToken0,
-      poolManager: swaps.CFG.poolManager,
-      hook: (process.env.HOOK_ADDRESS || '').trim() || null,
-      weth: (process.env.WETH_ADDRESS || '').trim() || null
-    },
-    repo: 'https://github.com/northclauder/TradFI'
+    )
   };
 }
 
@@ -396,6 +368,28 @@ function isBlocked(requestPath) {
   return BLOCKED_PREFIXES.some((p) => requestPath === p || requestPath.startsWith(p + '/'));
 }
 
+/* ---- what actually goes over the wire -------------------------------------
+   The source in this repo is commented on purpose; none of it belongs in View
+   Source. Every text asset a browser can fetch is comment-stripped once at
+   boot and served from memory, so the bytes on the wire carry the behaviour
+   and nothing about the reasoning behind it. */
+const STRIPPERS = { '.js': stripJs, '.css': stripCss, '.html': stripHtml };
+const cleaned = new Map();
+
+function cleanedBody(filePath) {
+  if (cleaned.has(filePath)) return cleaned.get(filePath);
+  const strip = STRIPPERS[path.extname(filePath)];
+  if (!strip) { cleaned.set(filePath, null); return null; }
+  let body = null;
+  try {
+    body = Buffer.from(strip(fs.readFileSync(filePath, 'utf8')), 'utf8');
+  } catch {
+    body = null;   // unreadable or not text: fall through to the raw stream
+  }
+  cleaned.set(filePath, body);
+  return body;
+}
+
 function serveStatic(requestPath, response, headers) {
   if (isBlocked(requestPath)) {
     sendJson(response, 404, { error: 'Not found' });
@@ -453,6 +447,13 @@ function serveStatic(requestPath, response, headers) {
       return;
     }
 
+    const body = cleanedBody(filePath);
+    if (body) {
+      response.writeHead(200, { ...baseHeaders, 'Content-Length': body.length });
+      response.end(body);
+      return;
+    }
+
     response.writeHead(200, {
       ...baseHeaders,
       ...(isMedia ? { 'Accept-Ranges': 'bytes' } : {}),
@@ -470,7 +471,7 @@ function createServer() {
       return;
     }
     if (url.pathname === '/health') {
-      sendJson(response, 200, { ok: true, service: 'market-hours-exchange' });
+      sendJson(response, 200, { ok: true });
       return;
     }
     if (url.pathname === '/api/market-status') {

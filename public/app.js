@@ -1,13 +1,8 @@
 const experience = document.querySelector('#experience');
 const viewButtons = [...document.querySelectorAll('[data-view-button]')];
-const personTargets = [...document.querySelectorAll('[data-person]')];
-const personCard = document.querySelector('#personCard');
 const personHotspots = document.querySelector('.person-hotspots'); // removed from the landing page; guarded below
-const tradeDrawer = document.querySelector('#tradeDrawer');
-const drawerScrim = document.querySelector('#drawerScrim');
 const walletButton = document.querySelector('#walletButton');
 const walletLabel = document.querySelector('#walletLabel');
-const tradeSubmit = document.querySelector('#tradeSubmit');
 const toast = document.querySelector('#toast');
 const trafficTicks = [...document.querySelectorAll('#trafficTicks i')];
 const subwayDots = [...document.querySelectorAll('#subwayDots i')];
@@ -19,19 +14,10 @@ const skyStatus = document.querySelector('#skyStatus');
 const skyTag = document.querySelector('#skyTag');
 const videoDay = document.querySelector('#videoDay');
 const videoNight = document.querySelector('#videoNight');
-const chainProofLink = document.querySelector('#chainProofLink');
 let closesAtEpoch = null;
 let lastPrints = [];
 let lastLadder = [];
 let bellWatch = null;
-
-const people = {
-  ivy: { number: 'EMPLOYEE 001', name: 'Ivy Mercado', role: 'Head trader · night DJ', open: 'Ivy moves between the center desk and the glass wall all day, reading the room faster than the screens. At the bell, she leaves the floor for a booth downtown.', closed: 'Ivy clocked out at the bell. She is across town turning the closing candles into the first track of the night.', openLocation: 'THIRD FLOOR · EQUITIES', closedLocation: 'OFF DUTY · LOWER EAST SIDE' },
-  omar: { number: 'EMPLOYEE 017', name: 'Omar Price', role: 'Risk analyst', open: 'Omar is the one standing when everyone else sits. He watches four markets, two phones, and every door at once.', closed: 'His desk is dark. Omar is on the train home, writing tomorrow’s thesis in the margins of today’s close.', openLocation: 'SECOND FLOOR · RISK', closedLocation: 'OFF DUTY · DOWNTOWN TRAIN' },
-  leo: { number: 'EMPLOYEE 009', name: 'Leo Bell', role: 'Opening-bell keeper', open: 'Leo opens the floor at 9:30 sharp and spends the rest of the session moving between desks, delivering coffee and bad opinions.', closed: 'Leo locked the bell away. He lives six blocks over and will be back before the first monitor wakes up.', openLocation: 'FIRST FLOOR · OPERATIONS', closedLocation: 'OFF DUTY · WEST VILLAGE' },
-  mo: { number: 'NIGHT SHIFT 001', name: 'Mo Green', role: 'Building night manager', open: 'Mo sleeps while the building is loud.', closed: 'With four trading floors empty, Mo owns the building. He cleans one floor at a time while blue standby monitors keep him company.', openLocation: 'OFF DUTY', closedLocation: 'SECOND FLOOR · NIGHT SHIFT' },
-  sasha: { number: 'NIGHT SHIFT 002', name: 'Sasha Keys', role: 'Security · bell keeper', open: 'Sasha holds the front desk while the floor runs above her.', closed: 'The exchange is dark, but the lobby never is. Sasha watches the city traffic and starts the first coffee at 9:12.', openLocation: 'GROUND FLOOR · LOBBY', closedLocation: 'GROUND FLOOR · NIGHT SHIFT' }
-};
 
 let publicConfig = null;
 let marketStatus = null;
@@ -39,7 +25,6 @@ let marketStatus = null;
 // preview mode and no manual switch: at 9:30 New York it is the day floor, at
 // 4:00 it is the night floor, and that is the only thing that decides.
 const activeView = 'live';
-let selectedSide = 'buy';
 let toastTimer;
 let planeTimer;
 
@@ -134,10 +119,6 @@ function schedulePlane() {
   }, delay);
 }
 
-function closePersonCard() {
-  personCard.classList.remove('visible');
-  personCard.setAttribute('aria-hidden', 'true');
-}
 
 function tryPlay(video) {
   if (!video.paused && !video.ended) return;
@@ -273,7 +254,6 @@ function renderView() {
   renderTape(null);
   renderSystems();
   syncVideoPlayback();
-  closePersonCard();
 }
 
 /* A countdown that redraws every digit every second reads as a flicker. Each
@@ -350,28 +330,12 @@ function updateClock() {
   }
 }
 
-function updateTrade() {
-  if (!marketStatus || !publicConfig) return;
-  const configured = Boolean(publicConfig.tokenAddress && publicConfig.tradeUrl);
-  document.querySelector('#drawerMarketLabel').textContent = marketStatus.isOpen ? 'Market open' : marketStatus.reason;
-  document.querySelector('#drawerSession').textContent = marketStatus.coreHours;
-  document.querySelector('#tokenStatus').textContent = configured ? 'Configured' : 'Awaiting mainnet launch';
-  tradeSubmit.disabled = !marketStatus.isOpen || !configured;
-  document.querySelector('#tradeSubmitLabel').textContent = !marketStatus.isOpen
-    ? 'Returns at the opening bell'
-    : configured ? `${selectedSide === 'buy' ? 'Buy' : 'Sell'} $${publicConfig.tokenSymbol}` : 'Pool not live yet';
-  document.querySelector('#tradeNote').textContent = !marketStatus.isOpen
-    ? 'The order desk follows the real NYSE core session, gated on-chain by the pool hook. Visual previews never enable a transaction.'
-    : configured ? 'Review the execution route before signing in your wallet.' : 'The floor is open, but the mainnet pool hasn\'t launched yet.';
-}
-
 function renderMarket() {
   experience.dataset.market = marketStatus.state;
   document.documentElement.dataset.market = marketStatus.state;
   document.querySelector('#marketStateLabel').textContent = marketStatus.isOpen ? 'Market open' : 'Market closed';
   document.querySelector('#marketReason').textContent = `${marketStatus.reason} · ${marketStatus.coreHours}`;
   renderView();
-  updateTrade();
   updateClock();
 }
 
@@ -394,12 +358,6 @@ async function rpcCall(rpcUrl, to, data) {
    for the whole site instead of one per visitor, which is what keeps a public
    RPC usable when a lot of people arrive at once. All that is left here is
    pointing the proof link at the contract the answer came from. */
-function verifyOnChain() {
-  const address = publicConfig?.marketCalendar?.address;
-  if (address && chainProofLink) {
-    chainProofLink.href = `https://robinhoodchain.blockscout.com/address/${address}`;
-  }
-}
 
 async function loadRuntime() {
   try {
@@ -413,114 +371,14 @@ async function loadRuntime() {
     document.querySelectorAll('[data-token-symbol]').forEach((element) => { element.textContent = `$${publicConfig.tokenSymbol}`; });
     document.title = `${publicConfig.tokenName} — a memecoin on New York Stock Exchange hours`;
     renderMarket();
-    verifyOnChain();
   } catch {
     document.querySelector('#marketStateLabel').textContent = 'Status unavailable';
     document.querySelector('#marketReason').textContent = 'Trading remains disabled';
-    tradeSubmit.disabled = true;
     showToast('The market clock could not be reached. Trading remains disabled.');
   }
 }
 
-function openPersonCard(key) {
-  const person = people[key];
-  if (!person) return;
-  const state = visibleState();
-  document.querySelector('#personNumber').textContent = person.number;
-  document.querySelector('#personName').textContent = person.name;
-  document.querySelector('#personRole').textContent = person.role;
-  document.querySelector('#personStory').textContent = person[state];
-  document.querySelector('#personLocation').textContent = state === 'open' ? person.openLocation : person.closedLocation;
-  personCard.classList.add('visible');
-  personCard.setAttribute('aria-hidden', 'false');
-}
 
-function setTradeDrawer(open) {
-  tradeDrawer.classList.toggle('visible', open);
-  drawerScrim.classList.toggle('visible', open);
-  tradeDrawer.setAttribute('aria-hidden', String(!open));
-}
-
-async function connectWallet() {
-  if (!window.ethereum) return showToast('No compatible EVM wallet found.');
-  try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    try {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: publicConfig.chain.hexId }] });
-    } catch (error) {
-      if (error.code !== 4902) throw error;
-      await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
-        chainId: publicConfig.chain.hexId,
-        chainName: publicConfig.chain.name,
-        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-        rpcUrls: [publicConfig.chain.rpcUrl],
-        blockExplorerUrls: [publicConfig.chain.explorerUrl]
-      }] });
-    }
-    walletButton.classList.add('connected');
-    walletLabel.textContent = `${accounts[0].slice(0, 5)}…${accounts[0].slice(-4)}`;
-    showToast('Connected to Robinhood Chain.');
-  } catch (error) {
-    showToast(error?.message || 'Wallet connection cancelled.');
-  }
-}
-
-personTargets.forEach((target) => target.addEventListener('click', () => openPersonCard(target.dataset.person)));
-/* '#openStory' lived in the nav that the landing rebuild removed. Bind it only
-   if some other surface still renders it, instead of throwing on load. */
-const openStoryBtn = document.querySelector('#openStory');
-if (openStoryBtn) openStoryBtn.addEventListener('click', () => openPersonCard(visibleState() === 'open' ? 'ivy' : 'mo'));
-document.querySelector('#closePerson').addEventListener('click', closePersonCard);
-const openTrade = document.querySelector('#openTrade');
-if (openTrade) openTrade.addEventListener('click', () => setTradeDrawer(true));
-/* Nobody trades on this site. The coin lives in a Uniswap v4 pool, so the
-   button's whole job is to hand people off to it -- one hop, new tab, done.
-   Until TRADE_URL is set there is nothing to hand off to, so it says so. */
-const heroTrade = document.querySelector('#heroTrade');
-if (heroTrade) heroTrade.addEventListener('click', () => {
-  const url = publicConfig && publicConfig.tradeUrl;
-  if (!url) { showToast('The pool is not live yet.'); return; }
-  window.open(url, '_blank', 'noopener,noreferrer');
-});
-document.querySelector('#closeTrade').addEventListener('click', () => setTradeDrawer(false));
-drawerScrim.addEventListener('click', () => setTradeDrawer(false));
-walletButton.addEventListener('click', connectAccount);
-
-document.querySelectorAll('[data-side]').forEach((tab) => tab.addEventListener('click', () => {
-  selectedSide = tab.dataset.side;
-  document.querySelectorAll('[data-side]').forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
-  document.querySelector('#amountLabel').textContent = selectedSide === 'buy' ? 'You pay' : 'You sell';
-  document.querySelector('#amountCurrency').textContent = selectedSide === 'buy' ? 'ETH' : `$${publicConfig?.tokenSymbol || 'TRADFI'}`;
-  updateTrade();
-}));
-
-tradeSubmit.addEventListener('click', () => {
-  if (!marketStatus?.isOpen) return showToast('The order desk is closed.');
-  if (!publicConfig?.tradeUrl || !publicConfig?.tokenAddress) return showToast('No live pool yet — mainnet launch pending.');
-  window.open(publicConfig.tradeUrl, '_blank', 'noopener,noreferrer');
-});
-
-document.querySelector('#building').addEventListener('pointermove', (event) => {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const rect = event.currentTarget.getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width - .5) * -10;
-  const y = ((event.clientY - rect.top) / rect.height - .5) * -6;
-  experience.style.setProperty('--px', `${x}px`);
-  experience.style.setProperty('--py', `${y}px`);
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') syncVideoPlayback();
-});
-
-requestAnimationFrame(() => requestAnimationFrame(() => experience.classList.add('ready')));
-
-/* Paint the view once up front. renderView() used to run only off the back of
-   a successful chain read, so a ?view= override - or any failed read - left the
-   page frozen on its markup defaults (night video, night copy) no matter what
-   state it was actually meant to show. */
-renderView();
-updateClock();
 
 /* ---- the two panels, and the register below them -------------------------
    Everything the hero says now lives in exactly two places: the countdown on
@@ -778,7 +636,7 @@ async function readBalance(addr) {
   if (!cfg || !cfg.tokenAddress) return null;
   const data = '0x70a08231' + addr.toLowerCase().replace('0x', '').padStart(64, '0');
   try {
-    const out = await rpcCall(cfg.marketCalendar.rpcUrl, cfg.tokenAddress, data);
+    const out = await rpcCall(cfg.chain.rpcUrl, cfg.tokenAddress, data);
     return Number(BigInt(out)) / 1e18;
   } catch { return null; }
 }
@@ -859,7 +717,6 @@ loadQuote();
 
 setInterval(updateClock, 1000);
 setInterval(loadRuntime, 60000);
-setInterval(verifyOnChain, 45000);
 setInterval(loadTokenStats, 90000);
 loadRuntime();
 loadTokenStats();

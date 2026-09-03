@@ -108,14 +108,46 @@ test('a real trade never renders as size 0', () => {
   assert.equal(swaps.fmtSize(0), '0');
 });
 
-test('mainnet reports Robinhood Chain 4663, not the testnet id', () => {
-  const prev = process.env.MARKET_CALENDAR_NETWORK;
-  process.env.MARKET_CALENDAR_NETWORK = 'mainnet';
-  assert.equal(require('../server').getPublicConfig().marketCalendar.chainId, 4663);
-  process.env.MARKET_CALENDAR_NETWORK = 'testnet';
-  assert.equal(require('../server').getPublicConfig().marketCalendar.chainId, 46630);
-  if (prev === undefined) delete process.env.MARKET_CALENDAR_NETWORK;
-  else process.env.MARKET_CALENDAR_NETWORK = prev;
+test('the wire carries no part of the mechanism', () => {
+  // this is a privacy assertion, not a formatting one. Anything added to these
+  // payloads is readable by anyone who opens devtools, forever.
+  const { getPublicConfig, getMarketStatus } = require('../server');
+  const cfg = getPublicConfig();
+  for (const k of ['marketCalendar', 'pool', 'repo']) {
+    assert.equal(cfg[k], undefined, `/api/config leaks ${k}`);
+  }
+  const blob = JSON.stringify(cfg) + JSON.stringify(getMarketStatus());
+  // nextOpenAt survives on purpose -- it is a timestamp the countdown needs,
+  // not a description of how the answer was reached
+  for (const needle of ['github', 'northclauder', 'Selector', 'poolManager',
+                        'calendarAddress', 'isMarketOpen()', 'poolId',
+                        'hookAddress', 'keccak', '0xd4ce85f3', '0x564be63f',
+                        'MarketCalendar', 'NYSEHoursHook']) {
+    assert.ok(!blob.includes(needle), `an API payload leaks "${needle}"`);
+  }
+});
+
+test('nothing served to a browser carries a comment', () => {
+  const fs = require('node:fs');
+  const { stripJs, stripCss, stripHtml } = require('../strip');
+  const cases = [
+    ['public/app.js', stripJs, /\/\*|(^|[^:])\/\//m],
+    ['public/styles.css', stripCss, /\/\*/],
+    ['public/index.html', stripHtml, /<!--/]
+  ];
+  for (const [file, strip, pattern] of cases) {
+    const out = strip(fs.readFileSync(require('node:path').join(__dirname, '..', file), 'utf8'));
+    assert.ok(!pattern.test(out), `${file} still carries a comment after stripping`);
+    assert.ok(out.length > 1000, `${file} stripped to nothing -- the stripper broke`);
+  }
+});
+
+test('the stripper does not corrupt code that merely looks like a comment', () => {
+  const { stripJs } = require('../strip');
+  assert.equal(stripJs('const u = "https://x.com/a"; // x').trim(), 'const u = "https://x.com/a";');
+  assert.equal(stripJs('const r = /a\\/b/g; // x').trim(), 'const r = /a\\/b/g;');
+  assert.equal(stripJs('const s = "/* kept */";').trim(), 'const s = "/* kept */";');
+  assert.equal(stripJs('const x = a / b; // x').trim(), 'const x = a / b;');
 });
 
 test('the site is not tradeable until both the token and the route are set', () => {

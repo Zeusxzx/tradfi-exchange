@@ -99,11 +99,12 @@ const CALENDAR = {
   rpcUrl: process.env.MARKET_CALENDAR_RPC_URL || 'https://rpc.testnet.chain.robinhood.com',
   isMarketOpen: '0xd4ce85f3',
   nextOpen: '0x564be63f',
+  isMarketOpenAt: '0xde040e6c',
   ttlMs: 10_000,      // normal cadence
   ttlNearBellMs: 2_000 // within two minutes of an open or a close
 };
 
-let calendarCache = { at: 0, isOpen: null, nextOpenEpoch: null, error: null };
+let calendarCache = { at: 0, isOpen: null, nextOpenEpoch: null, closeEpoch: null, error: null };
 let calendarInFlight = null;
 
 async function ethCall(data) {
@@ -131,6 +132,30 @@ function padHex32(value) {
   return value.toString(16).padStart(64, '0');
 }
 
+/* ---- asking the contract when it shuts, too ------------------------------
+   The contract answers "is it open" but has no "when does today close".
+   That number used to come from a second, hardcoded NYSE table living in this
+   file -- and two calendars agree right up until they don't. They already
+   don't: the local table has 2028-07-03 and 2028-11-24 as half days, and the
+   chain's calendar stops at 2027, so on those two afternoons one says shut and
+   the other says open.
+
+   `isMarketOpenAt(t)` makes the disagreement unnecessary. Open now and shut in
+   eight hours, with exactly one flip in between, is a monotonic predicate --
+   so a binary search finds the closing second in ~14 reads, and the answer is
+   the contract's, not a copy of it. Done once per session and cached. */
+async function findCloseEpoch(nowSeconds) {
+  const openAt = async (t) => BigInt(await ethCall(CALENDAR.isMarketOpenAt + padHex32(t))) === 1n;
+  let lo = nowSeconds;                  // known open
+  let hi = nowSeconds + 8 * 3600;       // past any close, half day or not
+  if (await openAt(hi)) return null;    // no close within the window: say nothing
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (await openAt(mid)) lo = mid; else hi = mid;
+  }
+  return hi;                            // first second the market is shut
+}
+
 async function refreshCalendar(now = new Date()) {
   const nowSeconds = Math.floor(now.getTime() / 1000);
   try {
@@ -140,7 +165,16 @@ async function refreshCalendar(now = new Date()) {
     ]);
     const isOpen = BigInt(openRaw) === 1n;
     const nextOpenEpoch = Number(BigInt(nextRaw));
-    calendarCache = { at: Date.now(), isOpen, nextOpenEpoch, error: null };
+
+    // the cached close stays good until it passes; re-search only when this
+    // session's close is unknown or already behind us
+    let closeEpoch = calendarCache.closeEpoch;
+    if (!isOpen) {
+      closeEpoch = null;
+    } else if (closeEpoch === null || closeEpoch === undefined || closeEpoch <= nowSeconds) {
+      closeEpoch = await findCloseEpoch(nowSeconds);
+    }
+    calendarCache = { at: Date.now(), isOpen, nextOpenEpoch, closeEpoch, error: null };
   } catch (error) {
     // keep the last good answer, but remember why the refresh failed
     calendarCache = { ...calendarCache, at: Date.now(), error: error.message };
@@ -220,13 +254,15 @@ function getMarketStatus(now = new Date()) {
     // not when it next opens -- the panel counts down to the closing bell
     // the contract says whether it is open, not when it shuts; the closing bell
     // is 16:00 ET (13:00 on a half day), which the local table does carry
-    /* The close comes from the local table while the open/closed decision
-       comes from the contract, so on the one day they disagree this went
-       negative and the hero counted down past zero. If the contract says open
-       after the table's closing bell, there is no honest number to show. */
-    closesInSeconds: openNow
-      ? (closesAt > currentMinutes ? Math.round((closesAt - currentMinutes) * 60) : null)
-      : null
+    /* Straight from the contract's own closing second, so this can never
+       disagree with the open/closed state beside it. The local table is only
+       the fallback for when the chain is unreachable, and it is clamped so a
+       stale table can never produce a countdown running backwards. */
+    closesInSeconds: !openNow ? null : (
+      chainKnows && chain.closeEpoch
+        ? Math.max(0, chain.closeEpoch - Math.floor(now.getTime() / 1000))
+        : (closesAt > currentMinutes ? Math.round((closesAt - currentMinutes) * 60) : null)
+    )
   };
 }
 

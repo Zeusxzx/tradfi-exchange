@@ -195,3 +195,17 @@ test('the closing countdown never goes negative when the two clocks disagree', (
   assert.ok(s.closesInSeconds === null || s.closesInSeconds > 0,
     `closesInSeconds was ${s.closesInSeconds}`);
 });
+
+test('the closing bell comes from the contract, not a second calendar', () => {
+  // The bug this guards: the open/closed decision was the contract's while the
+  // closing time came from NYSE_EARLY_CLOSES in this file. They already
+  // disagree -- the table has 2028-07-03 and 2028-11-24 as half days and the
+  // on-chain calendar stops at 2027 -- so on those afternoons the contract
+  // holds the market open past the table's 13:00 and the countdown ran
+  // backwards. isMarketOpenAt() removes the second opinion.
+  const src = require('node:fs').readFileSync(
+    require('node:path').join(__dirname, '..', 'server.js'), 'utf8');
+  assert.match(src, /isMarketOpenAt: '0xde040e6c'/, 'the close is no longer asked of the chain');
+  assert.match(src, /chain\.closeEpoch/, 'closesInSeconds is not derived from the contract');
+  assert.match(src, /Math\.max\(0,/, 'the countdown is not clamped at zero');
+});

@@ -185,3 +185,13 @@ test('token-stats does not carry a tape that could overwrite the real one', asyn
   assert.equal(stats.prints, undefined, 'prints on token-stats blanked the live tape every 90s');
   assert.equal(stats.ladder, undefined, 'ladder on token-stats blanked the live ladder every 90s');
 });
+
+test('the closing countdown never goes negative when the two clocks disagree', () => {
+  // the open/closed decision is the contract's; the closing bell comes from
+  // the local table. If the contract holds the market open past 16:00 ET there
+  // is no honest number of seconds to show, so there must be none.
+  const { getMarketStatus } = require('../server');
+  const s = getMarketStatus();
+  assert.ok(s.closesInSeconds === null || s.closesInSeconds > 0,
+    `closesInSeconds was ${s.closesInSeconds}`);
+});

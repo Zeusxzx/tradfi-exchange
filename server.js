@@ -220,7 +220,13 @@ function getMarketStatus(now = new Date()) {
     // not when it next opens -- the panel counts down to the closing bell
     // the contract says whether it is open, not when it shuts; the closing bell
     // is 16:00 ET (13:00 on a half day), which the local table does carry
-    closesInSeconds: openNow ? Math.round((closesAt - currentMinutes) * 60) : null
+    /* The close comes from the local table while the open/closed decision
+       comes from the contract, so on the one day they disagree this went
+       negative and the hero counted down past zero. If the contract says open
+       after the table's closing bell, there is no honest number to show. */
+    closesInSeconds: openNow
+      ? (closesAt > currentMinutes ? Math.round((closesAt - currentMinutes) * 60) : null)
+      : null
   };
 }
 
